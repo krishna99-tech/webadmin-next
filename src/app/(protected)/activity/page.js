@@ -1,161 +1,309 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, useRef } from 'react';
 import Card from '@/components/UI/Card';
 import Button from '@/components/UI/Button';
 import Input from '@/components/UI/Input';
 import adminService from '@/services/adminService';
-import { Mail, Send, CheckCircle, AlertTriangle } from 'lucide-react';
+import useWebSocket from '@/hooks/useWebSocket';
+import {
+    History,
+    Search,
+    Download,
+    RefreshCw,
+    Filter,
+    User,
+    Activity,
+    AlertCircle,
+    Clock,
+    Zap,
+    Mail,
+    Shield,
+    Trash2,
+    Plus,
+    CheckCircle
+} from 'lucide-react';
 
-export default function Activity() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <ActivityContent />
-        </Suspense>
-    );
-}
+/* ===============================
+   AUDIT LOGS PAGE (TIMELINE)
+================================ */
+export default function AuditLogsPage() {
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterAction, setFilterAction] = useState('all');
+    const [isStreaming, setIsStreaming] = useState(true);
+    const [error, setError] = useState(null);
 
-function ActivityContent() {
-    const [activities, setActivities] = useState([]);
-    const [subject, setSubject] = useState('');
-    const [message, setMessage] = useState('');
-    const [sending, setSending] = useState(false);
-    const [feedback, setFeedback] = useState(null);
-    const searchParams = useSearchParams();
-    const recipientsParam = searchParams.get('recipients');
-    const recipients = recipientsParam ? recipientsParam.split(',') : [];
+    // WebSocket Integration for Live Streaming
+    const { lastMessage, connected } = useWebSocket();
 
-    // Load activity logs
     useEffect(() => {
-        const fetchActivity = async () => {
-            try {
-                const data = await adminService.getActivity();
-                setActivities(data);
-            } catch (err) {
-                console.error("Failed to load activity", err);
+        fetchLogs();
+    }, []);
+
+    // Handle incoming live logs
+    useEffect(() => {
+        if (connected && lastMessage && isStreaming) {
+            // Check if it's a log-type message
+            if (lastMessage.type === 'admin_log' || lastMessage.type === 'activity') {
+                const newLog = lastMessage.data;
+                setLogs(prev => [newLog, ...prev].slice(0, 100)); // Keep last 100
             }
-        };
-        fetchActivity();
-    }, [sending]); // Refresh log after sending
+        }
+    }, [lastMessage, connected, isStreaming]);
 
-    const handleSendBroadcast = async (e) => {
-        e.preventDefault();
-        setSending(true);
-        setFeedback(null);
-
+    const fetchLogs = async () => {
+        setLoading(true);
+        setError(null);
         try {
-            const result = await adminService.sendBroadcast(subject, message, recipients.length > 0 ? recipients : null);
-            setFeedback({ type: 'success', msg: result.message });
-            setSubject('');
-            setMessage('');
-        } catch (err) {
-            setFeedback({ type: 'error', msg: 'Failed to send broadcast.' });
+            const data = await adminService.getActivity();
+            setLogs(data);
+        } catch (error) {
+            console.error('Failed to fetch activity logs', error);
+            setError('Failed to retrieve event chronology. System may be under maintenance.');
         } finally {
-            setSending(false);
+            setLoading(false);
         }
     };
 
+    const handleExport = async () => {
+        try {
+            const result = await adminService.exportActivity();
+            const data = result.data;
+
+            // Convert to CSV
+            const headers = ['ID', 'Admin ID', 'Action', 'Recipient', 'Subject', 'Timestamp'];
+            const rows = data.map(l => [
+                l.id,
+                l.admin_id,
+                l.action,
+                l.recipient || '',
+                l.subject || '',
+                l.timestamp
+            ]);
+
+            const csv = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ].join('\n');
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('Failed to export activity logs');
+        }
+    };
+
+    const getActionIcon = (action) => {
+        switch (action) {
+            case 'broadcast_email': return <Mail size={16} className="text-blue-400" />;
+            case 'update_security_rules': return <Shield size={16} className="text-purple-400" />;
+            case 'delete_user': return <Trash2 size={16} className="text-red-400" />;
+            case 'create_device': return <Plus size={16} className="text-green-400" />;
+            case 'login': return <User size={16} className="text-blue-400" />;
+            default: return <Activity size={16} className="text-dim" />;
+        }
+    };
+
+    const filteredLogs = logs.filter(log => {
+        const matchesSearch =
+            log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            log.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            log.recipient?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            log.target_email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesFilter = filterAction === 'all' || log.action === filterAction;
+
+        return matchesSearch && matchesFilter;
+    });
+
+    const uniqueActions = ['all', ...new Set(logs.map(l => l.action))];
+
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fadeInUp">
-            {/* Compose Broadcast Section */}
-            <div>
-                <h2 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500" style={{ backgroundImage: 'linear-gradient(to right, #4ade80, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    Broadcast Center
-                </h2>
-                <Card>
-                    <div className="flex items-center gap-3 mb-6 text-gray-300">
-                        <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
-                            <Mail size={24} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-lg text-white">Send Announcement</h3>
-                            <p className="text-xs text-gray-500">
-                                {recipients.length > 0
-                                    ? `Sending to ${recipients.length} selected recipients.`
-                                    : 'Email all registered users instantly.'}
-                            </p>
-                            {recipients.length > 0 && (
-                                <div className="mt-1 flex flex-wrap gap-1">
-                                    {recipients.slice(0, 3).map(email => (
-                                        <span key={email} className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">
-                                            {email}
-                                        </span>
-                                    ))}
-                                    {recipients.length > 3 && (
-                                        <span className="text-[10px] text-gray-500">+{recipients.length - 3} more</span>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {feedback && (
-                        <div className={`p-3 rounded-lg flex items-center gap-2 mb-4 text-sm ${feedback.type === 'success' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
-                            }`}>
-                            {feedback.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-                            {feedback.msg}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSendBroadcast}>
-                        <Input
-                            label="Subject Line"
-                            id="subject"
-                            value={subject}
-                            onChange={(e) => setSubject(e.target.value)}
-                            placeholder="e.g. System Maintenance Update"
-                            required
-                        />
-
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Message Body</label>
-                            <textarea
-                                className="input-field min-h-[150px] resize-y font-sans"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                placeholder="Type your message here..."
-                                required
-                            />
-                        </div>
-
-                        <Button type="submit" loading={sending} className="w-full gap-2 justify-center">
-                            <Send size={18} />
-                            Send Broadcast
-                        </Button>
-                    </form>
-                </Card>
+        <div className="audit-logs-page animate-fadeInUp">
+            {/* Header */}
+            <div className="dashboard-header">
+                <div>
+                    <h2 className="dashboard-title">
+                        <History className="icon-glow mr-2" size={24} />
+                        Event Chronology
+                    </h2>
+                    <p className="dashboard-subtitle">
+                        Comprehensive immutable record of administrative maneuvers and system perturbations
+                    </p>
+                </div>
+                <div className="flex gap-3">
+                    <Button
+                        variant={isStreaming ? "secondary" : "outline"}
+                        className={isStreaming ? "border-green-500/30 text-green-400" : ""}
+                        onClick={() => setIsStreaming(!isStreaming)}
+                    >
+                        <Zap size={18} className={isStreaming ? "fill-green-400" : ""} />
+                        {isStreaming ? 'Live Stream Active' : 'Enable Live Feed'}
+                    </Button>
+                    <Button variant="outline" onClick={handleExport}>
+                        <Download size={18} />
+                        Export Data
+                    </Button>
+                </div>
             </div>
 
-            {/* Activity Log Section */}
-            <div>
-                <h2 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500" style={{ backgroundImage: 'linear-gradient(to right, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    Recent Activity
-                </h2>
-                <Card className="h-[500px] overflow-y-auto custom-scrollbar">
-                    <div className="space-y-4">
-                        {activities.length === 0 ? (
-                            <p className="text-center text-gray-500 py-10">No recent activity logs.</p>
-                        ) : (
-                            activities.map((log) => (
-                                <div key={log.id} className="p-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className="text-xs font-mono text-gray-500">
-                                            {new Date(log.timestamp).toLocaleString()}
-                                        </span>
-                                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/10">
-                                            {log.action}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm font-medium text-gray-200">{log.subject}</p>
-                                    <p className="text-xs text-gray-400 mt-1 truncate">
-                                        To: {log.recipient}
-                                    </p>
-                                </div>
-                            ))
-                        )}
+            {error && (
+                <div className="status-message status-error mb-6 border-red-500/20 bg-red-500/5 p-4 rounded-xl flex items-center gap-3">
+                    <AlertCircle size={20} className="text-red-400" />
+                    <span className="text-xs font-medium text-red-200">{error}</span>
+                </div>
+            )}
+
+            {/* Interactive Filters */}
+            <Card className="mb-8 border-white/5 bg-white/[0.01]">
+                <div className="flex flex-col md:flex-row gap-6 items-end">
+                    <div className="flex-1 w-full text-left">
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-dim mb-3 block">Pattern Search</label>
+                        <div className="topbar-search w-full bg-slate-900/50 border border-white/5 rounded-xl h-12 px-4 flex items-center gap-3 focus-within:border-blue-500/50 transition-all">
+                            <Search size={18} className="text-dim" />
+                            <input
+                                type="text"
+                                placeholder="Filter by action, admin, or target..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-dim"
+                            />
+                        </div>
                     </div>
-                </Card>
+                    <div className="w-full md:w-72 text-left">
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-dim mb-3 block">Logic Dimension</label>
+                        <select
+                            className="input-field h-12 bg-slate-900/50 border border-white/5 rounded-xl px-4 text-sm w-full focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer"
+                            value={filterAction}
+                            onChange={(e) => setFilterAction(e.target.value)}
+                        >
+                            {uniqueActions.map(action => (
+                                <option key={action} value={action} className="bg-slate-900">
+                                    {action === 'all' ? 'Universal Stream' : action.replace(/_/g, ' ').toUpperCase()}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <Button
+                        variant="secondary"
+                        onClick={fetchLogs}
+                        disabled={loading}
+                        className="h-12 w-12 p-0 flex items-center justify-center rounded-xl"
+                    >
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    </Button>
+                </div>
+            </Card>
+
+            {/* Timeline Stream */}
+            <div className="timeline-container relative max-w-4xl mx-auto px-4">
+                {/* Vertical Line */}
+                <div className="absolute left-[35px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-blue-500/20 via-blue-500/5 to-transparent"></div>
+
+                {loading && logs.length === 0 ? (
+                    <div className="py-20 text-center shimmer-effect">
+                        <Activity className="mx-auto mb-4 text-blue-400 animate-pulse icon-glow" size={48} />
+                        <p className="text-dim italic">Polling immutable record...</p>
+                    </div>
+                ) : filteredLogs.length === 0 ? (
+                    <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
+                        <AlertCircle size={48} className="mx-auto mb-4 text-dim opacity-10" />
+                        <p className="text-dim italic">No events found in this temporal dimension.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-8 pb-20">
+                        {filteredLogs.map((log, index) => (
+                            <div
+                                key={log.id || index}
+                                className="timeline-item flex gap-8 animate-fadeInUp"
+                                style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                                {/* Marker */}
+                                <div className="timeline-marker z-10 shrink-0 group">
+                                    <div className="w-10 h-10 rounded-full bg-slate-900 border-2 border-white/5 flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] group-hover:neon-border transition-all">
+                                        <div className="group-hover:icon-glow">
+                                            {getActionIcon(log.action)}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="timeline-content flex-1 text-left pb-4">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="flex items-center gap-1.5 text-dim text-[10px] font-mono tracking-tighter">
+                                            <Clock size={10} />
+                                            {new Date(log.timestamp).toLocaleString(undefined, {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                second: '2-digit',
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })}
+                                        </div>
+                                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border border-white/5 bg-white/5 text-dim`}>
+                                            {log.action?.replace(/_/g, ' ')}
+                                        </span>
+                                        {index === 0 && isStreaming && (
+                                            <span className="flex items-center gap-1 text-[8px] font-bold text-green-400 uppercase tracking-widest animate-pulse">
+                                                <div className="w-1 h-1 rounded-full bg-green-400"></div>
+                                                Pulse
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <Card className="hover:bg-white/[0.03] border-white/5 transition-all cursor-default">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-sm font-semibold text-white tracking-wide">
+                                                    {log.subject || log.action?.replace(/_/g, ' ')}
+                                                </h4>
+                                                <div className="flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg border border-white/5">
+                                                    <div className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-[8px] font-bold">A</div>
+                                                    <span className="text-[10px] text-dim font-mono">{log.admin_id?.slice(-4) || 'SYST'}</span>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-xs text-dim leading-relaxed">
+                                                {log.message || `Administrative action executed on target entity.`}
+                                            </p>
+
+                                            {(log.recipient || log.target_email || log.device_name) && (
+                                                <div className="flex items-center gap-4 mt-2 pt-2 border-t border-white/5">
+                                                    {log.recipient && (
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-blue-400/80">
+                                                            <Mail size={10} />
+                                                            {log.recipient}
+                                                        </div>
+                                                    )}
+                                                    {log.target_email && (
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-orange-400/80">
+                                                            <User size={10} />
+                                                            {log.target_email}
+                                                        </div>
+                                                    )}
+                                                    {log.device_name && (
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-green-400/80">
+                                                            <Zap size={10} />
+                                                            {log.device_name}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Card>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

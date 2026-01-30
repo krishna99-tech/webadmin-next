@@ -7,33 +7,25 @@ const Card = ({
   className = '',
   noPadding = false,
   hoverable = true,
+  loading = false,
   ...props
 }) => {
-  const baseClass = `
-    relative
-    bg-[var(--bg-card)]
-    backdrop-blur-xl
-    border border-[var(--border-color)]
-    rounded-[var(--radius)]
-    shadow-[var(--shadow-lg)]
-    transition-all duration-300 ease-out
-  `;
-
-  const hoverClass = hoverable
-    ? 'hover:-translate-y-1 hover:border-[var(--border-hover)] hover:bg-[var(--bg-card-hover)]'
-    : '';
-
   return (
     <div
       className={`
-        ${baseClass}
-        ${hoverClass}
-        ${noPadding ? '' : 'p-6'}
+        card
+        ${hoverable ? '' : '!transform-none !shadow-lg'}
+        ${noPadding ? 'p-0' : ''}
+        ${loading ? 'shimmer-effect' : ''}
         ${className}
       `}
       {...props}
     >
-      {children}
+      {loading ? (
+        <div className="min-h-[100px] flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+        </div>
+      ) : children}
     </div>
   );
 };

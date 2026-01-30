@@ -7,27 +7,47 @@ import Card from '@/components/UI/Card';
 import deviceService from '@/services/deviceService';
 import adminService from '@/services/adminService';
 import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    AreaChart,
+    Area
+} from 'recharts';
+import {
     Server,
     Activity,
     Wifi,
     Plus,
     Mail,
-    Users
+    Users,
+    Shield,
+    TrendingUp,
+    Clock,
+    WifiOff
 } from 'lucide-react';
 
 /* ===============================
    STAT CARD
 ================================ */
-const StatCard = ({ title, value, icon: Icon, accent = 'blue' }) => {
+const StatCard = ({ title, value, icon: Icon, accent = 'blue', subtext }) => {
     return (
-        <Card className="stat-card">
-            <div className={`stat-icon stat-${accent}`}>
-                <Icon size={28} />
+        <Card className="stat-card group hover:scale-[1.02] transition-transform duration-300">
+            <div className={`stat-icon stat-${accent} !bg-${accent}-500/5 !border-${accent}-500/10 shadow-inner group-hover:neon-border transition-all`}>
+                <Icon size={28} className="icon-glow" />
             </div>
 
             <div className="stat-content">
                 <span className="stat-title">{title}</span>
                 <span className="stat-value">{value}</span>
+                {subtext && <span className="text-[10px] text-dim mt-1">{subtext}</span>}
+            </div>
+
+            <div className="absolute top-2 right-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                <TrendingUp size={48} />
             </div>
         </Card>
     );
@@ -40,27 +60,23 @@ export default function Dashboard() {
     const [stats, setStats] = useState({
         totalDevices: 0,
         onlineDevices: 0,
-        activeAlerts: 0
+        offlineDevices: 0,
+        totalUsers: 0
     });
+    const [analytics, setAnalytics] = useState(null);
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const { currentUser } = useContext(AuthContext);
 
     useEffect(() => {
-        const fetchStats = async () => {
-            if (!currentUser) return; // Wait for auth
+        const fetchDashboardData = async () => {
+            if (!currentUser) return;
 
             try {
-                let devicesPromise;
-                if (currentUser.is_admin) {
-                    devicesPromise = adminService.getAllDevices();
-                } else {
-                    devicesPromise = deviceService.getDevices();
-                }
-
-                const [devices, activityLogs] = await Promise.all([
-                    devicesPromise,
-                    adminService.getActivity()
+                const [devices, activityLogs, analyticsData] = await Promise.all([
+                    currentUser.is_admin ? adminService.getAllDevices() : deviceService.getDevices(),
+                    adminService.getActivity(),
+                    currentUser.is_admin ? adminService.getAnalytics() : null
                 ]);
 
                 const online = devices.filter(d => d.status === 'online').length;
@@ -68,106 +84,256 @@ export default function Dashboard() {
                 setStats({
                     totalDevices: devices.length,
                     onlineDevices: online,
-                    activeAlerts: 0
+                    offlineDevices: devices.length - online,
+                    totalUsers: analyticsData?.current_stats?.total_users || 0
                 });
 
-                setActivities((activityLogs || []).slice(0, 5));
+                setActivities((activityLogs || []).slice(0, 8));
+                setAnalytics(analyticsData);
             } catch (error) {
-                console.error('Failed to fetch dashboard stats', error);
+                console.error('Failed to fetch dashboard data', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchStats();
+        fetchDashboardData();
     }, [currentUser]);
 
     return (
-        <div className="dashboard-page animate-fadeInUp">
+        <div className="dashboard-page animate-fadeIn">
             {/* Header */}
-            <div className="dashboard-header">
-                <h2 className="dashboard-title">Dashboard Overview</h2>
-                <p className="dashboard-subtitle">
-                    Real-time status of devices and system health
-                </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h2 className="dashboard-title mb-1">System Overview</h2>
+                    <p className="dashboard-subtitle">
+                        Real-time analytics and platform health metrics
+                    </p>
+                </div>
+                {currentUser?.is_admin && (
+                    <div className="flex gap-3">
+                        <span className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-full text-xs font-bold border border-green-500/20">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse border border-white" />
+                            API OPERATIONAL
+                        </span>
+                        <span className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">
+                            v1.2.4-BETA
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* KPI GRID */}
             <div className="dashboard-kpi-grid">
                 <StatCard
-                    title="Total Devices"
+                    title="Total Fleet"
                     value={loading ? '—' : stats.totalDevices}
                     icon={Server}
                     accent="blue"
+                    subtext="Instruments registered"
                 />
 
                 <StatCard
-                    title="Online Systems"
+                    title="Active Now"
                     value={loading ? '—' : stats.onlineDevices}
                     icon={Wifi}
                     accent="green"
+                    subtext={`${Math.round((stats.onlineDevices / stats.totalDevices) * 100) || 0}% Connection Rate`}
                 />
 
                 <StatCard
-                    title="Active Alerts"
-                    value={loading ? '—' : stats.activeAlerts}
-                    icon={Activity}
+                    title="Offline"
+                    value={loading ? '—' : stats.offlineDevices}
+                    icon={WifiOff}
                     accent="red"
+                    subtext="Requiring attention"
+                    loading={loading}
                 />
+
+                {currentUser?.is_admin && (
+                    <StatCard
+                        title="User Base"
+                        value={loading ? '—' : stats.totalUsers}
+                        icon={Users}
+                        accent="purple"
+                        subtext="Registrations in database"
+                    />
+                )}
             </div>
+
+            {/* CHARTS ROW */}
+            {currentUser?.is_admin && analytics && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <Card className="!bg-black/40 !backdrop-blur-xl border-white/5">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="card-title text-sm flex items-center gap-2">
+                                <TrendingUp size={16} className="text-blue-400" />
+                                Device Registration Trend
+                            </h3>
+                        </div>
+                        <div className="h-[250px] w-full mt-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={analytics.device_growth.slice(-14)}>
+                                    <defs>
+                                        <linearGradient id="colorDevices" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis
+                                        dataKey="date"
+                                        stroke="#6B7280"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickFormatter={(val) => val.split('-').slice(1).join('/')}
+                                    />
+                                    <YAxis
+                                        stroke="#6B7280"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#3b82f6' }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="count"
+                                        stroke="#3b82f6"
+                                        strokeWidth={2}
+                                        fillOpacity={1}
+                                        fill="url(#colorDevices)"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </Card>
+
+                    <Card className="!bg-black/40 !backdrop-blur-xl border-white/5">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="card-title text-sm flex items-center gap-2">
+                                <Users size={16} className="text-purple-400" />
+                                User Growth Stream
+                            </h3>
+                        </div>
+                        <div className="h-[250px] w-full mt-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={analytics.user_growth.slice(-14)}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis
+                                        dataKey="date"
+                                        stroke="#6B7280"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickFormatter={(val) => val.split('-').slice(1).join('/')}
+                                    />
+                                    <YAxis
+                                        stroke="#6B7280"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#c084fc' }}
+                                    />
+                                    <Line
+                                        type="stepAfter"
+                                        dataKey="count"
+                                        stroke="#c084fc"
+                                        strokeWidth={3}
+                                        dot={{ r: 4, fill: '#c084fc', strokeWidth: 2, stroke: '#111' }}
+                                        activeDot={{ r: 6 }}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </Card>
+                </div>
+            )}
 
             {/* LOWER GRID */}
             <div className="dashboard-lower-grid">
                 {/* Quick Actions */}
-                <Card>
-                    <h3 className="card-title mb-4">Quick Actions</h3>
+                <Card className="border-white/5">
+                    <h3 className="card-title mb-6 flex items-center gap-2">
+                        <Plus size={16} className="text-dim" />
+                        Quick Command Hub
+                    </h3>
 
-                    <div className="quick-actions-grid">
-                        <Link href="/users" className="quick-action">
-                            <Users size={20} className="text-blue-400" />
-                            <span>Manage Users</span>
+                    <div className="quick-actions-grid !grid-cols-1 sm:!grid-cols-2">
+                        <Link href="/users" className="quick-action group">
+                            <Users size={20} className="text-blue-400 group-hover:scale-110 transition-transform" />
+                            <div className="text-left">
+                                <p className="font-bold">Identity Center</p>
+                                <p className="text-[10px] text-dim">Manage account permissions</p>
+                            </div>
                         </Link>
 
-                        <Link href="/activity" className="quick-action">
-                            <Mail size={20} className="text-green-400" />
-                            <span>Broadcast</span>
+                        <Link href="/broadcast" className="quick-action group">
+                            <Mail size={20} className="text-green-400 group-hover:scale-110 transition-transform" />
+                            <div className="text-left">
+                                <p className="font-bold">Dispatch Hub</p>
+                                <p className="text-[10px] text-dim">Global blast & messaging</p>
+                            </div>
                         </Link>
 
-                        <Link href="/devices" className="quick-action">
-                            <Server size={20} className="text-purple-400" />
-                            <span>Devices</span>
+                        <Link href="/devices" className="quick-action group">
+                            <Server size={20} className="text-purple-400 group-hover:scale-110 transition-transform" />
+                            <div className="text-left">
+                                <p className="font-bold">Fleet Manager</p>
+                                <p className="text-[10px] text-dim">Device lifecycle & logs</p>
+                            </div>
                         </Link>
 
-                        <div className="quick-action disabled">
-                            <Plus size={20} />
-                            <span>More Soon</span>
-                        </div>
+                        <Link href="/settings" className="quick-action group">
+                            <Shield size={20} className="text-red-400 group-hover:scale-110 transition-transform" />
+                            <div className="text-left">
+                                <p className="font-bold">Security & Sys</p>
+                                <p className="text-[10px] text-dim">System level configs</p>
+                            </div>
+                        </Link>
                     </div>
                 </Card>
 
                 {/* Recent Activity */}
-                <Card>
-                    <h3 className="card-title mb-4">Recent Activity</h3>
+                <Card className="border-white/5">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="card-title flex items-center gap-2">
+                            <Activity size={16} className="text-green-400" />
+                            Live System Event Log
+                        </h3>
+                        <Link href="/activity" className="text-[10px] text-blue-400 hover:underline uppercase tracking-widest font-bold">View Audit Trail</Link>
+                    </div>
 
-                    <div className="activity-list">
+                    <div className="activity-list space-y-4">
                         {activities.length === 0 ? (
-                            <p className="activity-empty">No recent activity.</p>
+                            <div className="text-center py-10">
+                                <p className="activity-empty text-dim italic">Awaiting platform events...</p>
+                            </div>
                         ) : (
-                            activities.map(log => (
-                                <div key={log.id} className="activity-item">
+                            activities.map((log, i) => (
+                                <div key={log.id || i} className="activity-item !bg-white/5 !border-white/5 hover:!bg-white/10 transition-colors rounded-xl p-3 border border-transparent">
                                     <div className="activity-icon">
-                                        <Activity size={12} />
+                                        <Clock size={12} className="text-blue-400" />
                                     </div>
 
                                     <div className="activity-content">
-                                        <p className="activity-text">{log.action}</p>
-                                        <p className="activity-meta">
-                                            {new Date(log.timestamp).toLocaleTimeString([], {
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
-                                            {' • '}
-                                            {log.recipient || 'System'}
+                                        <div className="flex justify-between items-start">
+                                            <p className="activity-text font-bold text-white capitalize">{log.action.replace(/_/g, ' ')}</p>
+                                            <span className="text-[9px] text-gray-500 font-mono">
+                                                {new Date(log.timestamp).toLocaleTimeString([], {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </span>
+                                        </div>
+                                        <p className="activity-meta text-dim italic">
+                                            Recipient: {log.recipient || 'Platform Kernel'}
                                         </p>
                                     </div>
                                 </div>

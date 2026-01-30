@@ -34,9 +34,9 @@ const COLORS = [
    STAT TILE
 ================================ */
 const StatTile = ({ icon: Icon, label, value, accent }) => (
-  <Card className="analytics-stat">
-    <div className={`analytics-stat-icon ${accent}`}>
-      <Icon size={22} />
+  <Card className="analytics-stat group hover:neon-border transition-all" loading={!value && value !== 0}>
+    <div className={`analytics-stat-icon ${accent} !bg-white/5 shadow-inner`}>
+      <Icon size={22} className="icon-glow" />
     </div>
     <div className="analytics-stat-content">
       <span className="analytics-stat-label">{label}</span>
@@ -128,8 +128,11 @@ export default function Analytics() {
       {/* Charts */}
       <div className="analytics-charts-grid">
         {/* User Growth */}
-        <Card>
-          <h3 className="card-title">User Growth (30 Days)</h3>
+        <Card className="!bg-black/40 !backdrop-blur-2xl border-white/5">
+          <h3 className="card-title flex items-center gap-2">
+            <Users size={16} className="text-blue-400" />
+            User Growth (30 Days)
+          </h3>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.user_growth}>

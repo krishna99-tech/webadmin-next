@@ -74,7 +74,7 @@ export default function Users() {
             .filter(Boolean)
             .join(',');
 
-        router.push(`/activity?recipients=${encodeURIComponent(recipients)}`);
+        router.push(`/broadcast?recipients=${encodeURIComponent(recipients)}`);
     };
 
     const toggleSelectAll = () => {
@@ -244,7 +244,7 @@ export default function Users() {
                                                 title="Send Email"
                                                 className="users-action-btn"
                                                 onClick={() => {
-                                                    router.push(`/activity?recipients=${encodeURIComponent(user.email)}`);
+                                                    router.push(`/broadcast?recipients=${encodeURIComponent(user.email)}`);
                                                 }}
                                             >
                                                 <Mail size={16} />

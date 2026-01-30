@@ -1,10 +1,20 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState, use, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '@/components/UI/Card';
 import Button from '@/components/UI/Button';
 import adminService from '@/services/adminService';
+import useWebSocket from '@/hooks/useWebSocket';
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer
+} from 'recharts';
 import {
     ArrowLeft,
     User,
@@ -12,7 +22,8 @@ import {
     Calendar,
     Smartphone,
     Activity,
-    Send
+    Send,
+    Wifi
 } from 'lucide-react';
 
 export default function UserDetail({ params }) {
@@ -21,6 +32,27 @@ export default function UserDetail({ params }) {
 
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [telemetryData, setTelemetryData] = useState([]);
+
+    // Initialize WebSocket connection
+    const { messages, status } = useWebSocket();
+
+    // Handle incoming telemetry via WebSocket
+    useEffect(() => {
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage.type === 'telemetry' && user?.devices?.some(d => d.id === lastMessage.device_id)) {
+                setTelemetryData(prev => {
+                    const newData = [...prev, {
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                        value: lastMessage.data?.value || 0,
+                        key: lastMessage.data?.key || 'unknown'
+                    }].slice(-20); // Keep last 20 points
+                    return newData;
+                });
+            }
+        }
+    }, [messages, user]);
 
     useEffect(() => {
         if (!id) return;
@@ -81,19 +113,26 @@ export default function UserDetail({ params }) {
                     </p>
                 </div>
 
-                {user.email && (
-                    <Button
-                        className="user-email-btn"
-                        onClick={() =>
-                            router.push(
-                                `/activity?recipients=${encodeURIComponent(user.email)}`
-                            )
-                        }
-                    >
-                        <Send size={16} />
-                        Send Email
-                    </Button>
-                )}
+                <div className="flex gap-2">
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${status === 'CONNECTED' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                        }`}>
+                        <Wifi size={12} className={status === 'CONNECTED' ? 'animate-pulse' : ''} />
+                        Live: {status}
+                    </div>
+                    {user.email && (
+                        <Button
+                            className="user-email-btn"
+                            onClick={() =>
+                                router.push(
+                                    `/activity?recipients=${encodeURIComponent(user.email)}`
+                                )
+                            }
+                        >
+                            <Send size={16} />
+                            Send Email
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* ===============================
@@ -133,58 +172,115 @@ export default function UserDetail({ params }) {
                 </div>
             </div>
 
-            {/* ===============================
-          DEVICES
-      ============================== */}
-            <Card>
-                <h3 className="section-title">Devices</h3>
-
-                {!user.devices?.length ? (
-                    <p className="empty-text">No devices registered.</p>
-                ) : (
-                    <div className="device-list">
-                        {user.devices.map(device => (
-                            <div key={device.id} className="device-row">
-                                <div>
-                                    <p className="device-name">{device.name}</p>
-                                    <p className="device-id">{device.id}</p>
-                                </div>
-                                <span className={`device-status ${device.status}`}>
-                                    {device.status}
-                                </span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* ===============================
+                    DEVICES & LIVE MONITORING
+                ============================== */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Card>
+                        <h3 className="section-title">Device Fleet</h3>
+                        {!user.devices?.length ? (
+                            <p className="empty-text">No devices registered.</p>
+                        ) : (
+                            <div className="device-list">
+                                {user.devices.map(device => (
+                                    <div key={device.id} className="device-row">
+                                        <div>
+                                            <p className="device-name">{device.name}</p>
+                                            <p className="device-id">{device.id}</p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`device-status ${device.status}`}>
+                                                {device.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                )}
-            </Card>
+                        )}
+                    </Card>
 
-            {/* ===============================
-          ACTIVITY
-      ============================== */}
-            <Card>
-                <h3 className="section-title">Recent Activity</h3>
+                    <Card>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="section-title mb-0">Live Telemetry</h3>
+                            <span className="text-[10px] text-dim font-mono">Real-time sampling active</span>
+                        </div>
 
-                {!user.recent_activity?.length ? (
-                    <p className="empty-text">No recent activity.</p>
-                ) : (
-                    <div className="activity-list">
-                        {user.recent_activity.map(log => (
-                            <div key={log.id} className="activity-row">
-                                <div className="activity-icon">
-                                    <Mail size={12} />
+                        <div className="h-[250px] w-full">
+                            {telemetryData.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-dim border border-dashed border-white/5 rounded-lg">
+                                    <Activity size={32} className="mb-2 opacity-20" />
+                                    <p className="text-sm">Waiting for incoming data...</p>
                                 </div>
-                                <div>
-                                    <p className="activity-title">{log.action}</p>
-                                    <p className="activity-sub">{log.subject}</p>
-                                    <p className="activity-time">
-                                        {new Date(log.timestamp).toLocaleString()}
-                                    </p>
-                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={telemetryData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                        <XAxis
+                                            dataKey="time"
+                                            stroke="rgba(255,255,255,0.3)"
+                                            fontSize={10}
+                                            tickLine={false}
+                                        />
+                                        <YAxis
+                                            stroke="rgba(255,255,255,0.3)"
+                                            fontSize={10}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: '#0f172a',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '8px',
+                                                fontSize: '12px'
+                                            }}
+                                            itemStyle={{ color: '#60a5fa' }}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="value"
+                                            stroke="#60a5fa"
+                                            strokeWidth={2}
+                                            dot={false}
+                                            animationDuration={300}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </Card>
+                </div>
+
+                {/* ===============================
+                    RECENT ACTIONS
+                ============================== */}
+                <div className="lg:col-span-1">
+                    <Card className="h-full">
+                        <h3 className="section-title">Interaction History</h3>
+                        {!user.recent_activity?.length ? (
+                            <p className="empty-text">No recent activity.</p>
+                        ) : (
+                            <div className="activity-list">
+                                {user.recent_activity.map(log => (
+                                    <div key={log.id} className="activity-row">
+                                        <div className="activity-icon">
+                                            <Mail size={12} />
+                                        </div>
+                                        <div>
+                                            <p className="activity-title">{log.action}</p>
+                                            <p className="activity-sub">{log.subject}</p>
+                                            <p className="activity-time">
+                                                {new Date(log.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                )}
-            </Card>
+                        )}
+                    </Card>
+                </div>
+            </div>
         </div>
     );
 }

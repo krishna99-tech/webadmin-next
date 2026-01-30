@@ -28,6 +28,17 @@ const deleteUser = async (userId) => {
     }
 };
 
+/* Get specific device details */
+const getDeviceDetail = async (deviceId) => {
+    try {
+        const response = await api.get(`/admin/devices/${deviceId}`);
+        return response.data;
+    } catch (error) {
+        console.error(`❌ Failed to fetch device detail: ${deviceId}`, error);
+        throw error;
+    }
+};
+
 /* Get admin activity log */
 const getActivity = async () => {
     try {
@@ -120,6 +131,105 @@ const exportActivity = async () => {
     }
 };
 
+/* Get security rules */
+const getSecurityRules = async () => {
+    try {
+        const response = await api.get('/admin/security-rules');
+        return response.data;
+    } catch (error) {
+        console.error('❌ Failed to fetch security rules', error);
+        throw error;
+    }
+};
+
+/* Update security rules */
+const updateSecurityRules = async (rules) => {
+    try {
+        const response = await api.post('/admin/security-rules', rules);
+        return response.data;
+    } catch (error) {
+        console.error('❌ Failed to update security rules', error);
+        throw error;
+    }
+};
+
+/* Get dashboards for a device */
+const getDashboards = async (deviceId) => {
+    try {
+        const response = await api.get(`/admin/dashboards/${deviceId}`); // Assuming specialized admin route or shared one
+        return response.data;
+    } catch (error) {
+        console.error(`❌ Failed to fetch dashboards for device: ${deviceId}`, error);
+        throw error;
+    }
+};
+
+/* Get widgets for a dashboard */
+const getWidgets = async (dashboardId) => {
+    try {
+        const response = await api.get(`/widgets/${dashboardId}`);
+        return response.data;
+    } catch (error) {
+        console.error(`❌ Failed to fetch widgets for dashboard: ${dashboardId}`, error);
+        throw error;
+    }
+};
+
+/* Get latest telemetry for a device (admin only) */
+const getDeviceTelemetry = async (deviceId) => {
+    try {
+        const response = await api.get(`/admin/devices/${deviceId}/telemetry`);
+        return response.data;
+    } catch (error) {
+        console.error(`❌ Failed to fetch telemetry for device: ${deviceId}`, error);
+        throw error;
+    }
+};
+
+/* Update current admin profile */
+const updateProfile = async (profileData) => {
+    try {
+        const response = await api.put('/auth/me', profileData);
+        return response.data;
+    } catch (error) {
+        console.error('❌ Failed to update profile', error);
+        throw error;
+    }
+};
+
+/* Get system notifications */
+const getNotifications = async () => {
+    try {
+        const response = await api.get('/admin/notifications');
+        return response.data;
+    } catch (error) {
+        console.error('❌ Failed to fetch notifications', error);
+        return [];
+    }
+};
+
+/* Create device for any user (admin only) */
+const createDeviceAdmin = async (deviceData) => {
+    try {
+        const response = await api.post('/admin/devices', deviceData);
+        return response.data;
+    } catch (error) {
+        console.error('❌ Failed to create device as admin', error);
+        throw error;
+    }
+};
+
+/* Transfer device ownership (admin only) */
+const transferDeviceOwnership = async (deviceId, userId) => {
+    try {
+        const response = await api.patch(`/admin/devices/${deviceId}/transfer`, { user_id: userId });
+        return response.data;
+    } catch (error) {
+        console.error(`❌ Failed to transfer device: ${deviceId}`, error);
+        throw error;
+    }
+};
+
 /* Export service */
 const adminService = {
     getUsers,
@@ -131,7 +241,17 @@ const adminService = {
     getAnalytics,
     exportUsers,
     exportDevices,
-    exportActivity
+    exportActivity,
+    getSecurityRules,
+    updateSecurityRules,
+    getDashboards,
+    getWidgets,
+    getDeviceDetail,
+    getDeviceTelemetry,
+    updateProfile,
+    getNotifications,
+    createDeviceAdmin,
+    transferDeviceOwnership
 };
 
 export default adminService;
