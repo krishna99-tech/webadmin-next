@@ -66,7 +66,7 @@ export default function Dashboard() {
     const [analytics, setAnalytics] = useState(null);
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { currentUser } = useContext(AuthContext);
+    const { user: currentUser } = useContext(AuthContext);
 
     useEffect(() => {
         const fetchDashboardData = async () => {

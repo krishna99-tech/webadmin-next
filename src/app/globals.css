@@ -37,6 +37,9 @@
 
   /* Effects */
   --glass: blur(20px) saturate(180%);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(15, 23, 42, 0.65);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .15);
   --shadow-lg: 0 20px 40px rgba(0, 0, 0, .45);
   --shadow-primary: 0 0 25px var(--primary-glow);
@@ -70,6 +73,11 @@ html {
 *::before,
 *::after {
   box-sizing: inherit;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
 }
 
 body {
@@ -444,6 +452,7 @@ p {
 .text-gradient {
   background: linear-gradient(135deg, #60a5fa, #a855f7, #ec4899);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -451,6 +460,19 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* =====================================
@@ -532,6 +554,7 @@ p {
   font-weight: 700;
   background: linear-gradient(135deg, #60a5fa, #a855f7);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -2807,9 +2830,7 @@ p {
   color: var(--text-dim);
 }
 
-.webhook-events {}
 
-.webhook-stats {}
 
 .webhook-status {
   display: flex;
@@ -2819,7 +2840,7 @@ p {
   color: var(--text-muted);
 }
 
-.webhook-badge {}
+
 
 .webhook-actions {
   display: flex;
@@ -3157,4 +3178,159 @@ p {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-main);
+}
+/* =====================================
+   IOT CONSOLE SPECIALIZED STYLES
+===================================== */
+
+.iot-console-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Premium Sticky Header */
+.iot-premium-header {
+  position: sticky;
+  top: -2rem; /* Pull slightly up for better integration with page main padding */
+  z-index: 40;
+  margin: -2rem -2.5rem 1.5rem -2.5rem; /* Match app-main padding */
+  padding: 2.5rem 2.5rem 1.5rem 2.5rem;
+  background: linear-gradient(to bottom, 
+    rgba(2, 6, 23, 0.9) 0%, 
+    rgba(2, 6, 23, 0.7) 80%, 
+    transparent 100%);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-title-gradient {
+  font-size: 2.25rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Tab System Enhancement */
+.iot-tab-container {
+  display: flex;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  padding: 0.35rem;
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  width: fit-content;
+}
+
+.iot-tab-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.iot-tab-item:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.iot-tab-item.active {
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.iot-tab-item svg {
+  transition: transform 0.3s ease;
+}
+
+.iot-tab-item.active svg {
+  transform: scale(1.1);
+}
+
+/* Content Area Surface */
+.iot-content-surface {
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 2rem;
+  min-height: 500px;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.1);
+  animation: surfaceEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes surfaceEnter {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glow Primary Button */
+.btn-glow {
+  position: relative;
+  background: var(--primary);
+  border: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px var(--primary-glow);
+}
+
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent 30%
+  );
+  animation: btnRotate 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes btnRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Stats Cards Enhancement */
+.iot-stat-card {
+  border: 1px solid var(--border-color);
+  background: rgba(30, 41, 59, 0.25);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius);
+  transition: all 0.3s ease;
+}
+
+.iot-stat-card:hover {
+  background: rgba(30, 41, 59, 0.45);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.border-glow {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }

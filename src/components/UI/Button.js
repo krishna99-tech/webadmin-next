@@ -19,6 +19,7 @@ const Button = ({
             type={type}
             className={`${baseClass} ${variantClass} ${className}`}
             disabled={loading || disabled}
+            aria-busy={loading}
             {...props}
         >
             {loading ? (

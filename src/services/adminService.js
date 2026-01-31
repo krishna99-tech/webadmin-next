@@ -10,7 +10,8 @@ import api from './api';
 const getUsers = async () => {
     try {
         const response = await api.get('/admin/users');
-        return response.data;
+        // Handle both paginated { data: [] } and direct []
+        return response.data?.data || (Array.isArray(response.data) ? response.data : []);
     } catch (error) {
         console.error('❌ Failed to fetch users', error);
         throw error;
@@ -40,10 +41,10 @@ const getDeviceDetail = async (deviceId) => {
 };
 
 /* Get admin activity log */
-const getActivity = async () => {
+const getActivity = async (filters = {}) => {
     try {
-        const response = await api.get('/admin/activity');
-        return response.data;
+        const response = await api.get('/admin/activity', { params: filters });
+        return response.data?.data || (Array.isArray(response.data) ? response.data : []);
     } catch (error) {
         console.error('❌ Failed to fetch activity logs', error);
         throw error;
@@ -54,7 +55,7 @@ const getActivity = async () => {
 const getAllDevices = async () => {
     try {
         const response = await api.get('/admin/devices');
-        return response.data;
+        return response.data?.data || (Array.isArray(response.data) ? response.data : []);
     } catch (error) {
         console.error('❌ Failed to fetch all devices', error);
         throw error;

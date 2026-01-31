@@ -48,8 +48,8 @@ const Sidebar = () => {
             </div>
 
             {/* Navigation */}
-            <nav className="sidebar-nav">
-                <p className="sidebar-section">Menu</p>
+            <nav className="sidebar-nav" aria-label="Main Navigation">
+                <p className="sidebar-section" aria-hidden="true">Menu</p>
 
                 {navItems.map((item) => {
                     const isActive =
@@ -63,6 +63,7 @@ const Sidebar = () => {
                             key={item.path}
                             href={item.path}
                             className={`sidebar-link group ${isActive ? 'active' : ''}`}
+                            aria-current={isActive ? 'page' : undefined}
                         >
                             <div className={`p-1.5 rounded-lg transition-all ${isActive ? 'bg-blue-500/10 text-blue-400' : 'group-hover:bg-white/5'}`}>
                                 <Icon size={18} className={isActive ? 'icon-glow' : ''} />

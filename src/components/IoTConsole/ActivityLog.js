@@ -1,90 +1,22 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import Button from '@/components/UI/Button';
-import Card from '@/components/UI/Card';
-import adminService from '@/services/adminService';
-import useWebSocket from '@/hooks/useWebSocket';
-import {
-    History,
-    Download,
-    Search,
-    RefreshCw,
-    Calendar,
-    Clock,
-    BarChart3,
-    AlertTriangle,
-    Shield,
-    Activity as ActivityIcon,
-    AlertCircle,
-    Mail,
-    User,
-    Trash2,
-    Plus
+import React from 'react';
+import Card from '../UI/Card';
+import Button from '../UI/Button';
+import { 
+    Search, RefreshCw, Calendar, Clock, BarChart3, AlertTriangle, Shield, Activity as ActivityIcon, AlertCircle, Mail, User, Trash2, Plus 
 } from 'lucide-react';
 
-export default function ActivityPage() {
-    // State
-    const [logs, setLogs] = useState([]);
-    const [loadingLogs, setLoadingLogs] = useState(true);
-    const [logSearchTerm, setLogSearchTerm] = useState('');
-    const [logFilterAction, setLogFilterAction] = useState('all');
-    const [logDateRange, setLogDateRange] = useState({ start: '', end: '' });
-    const [isStreaming, setIsStreaming] = useState(true);
-    const [logError, setLogError] = useState(null);
-
-    // WebSocket
-    const { lastMessage, connected } = useWebSocket();
-
-    useEffect(() => {
-        fetchLogs();
-    }, [logDateRange]);
-
-    const fetchLogs = async () => {
-        setLoadingLogs(true);
-        setLogError(null);
-        try {
-            const filters = {};
-            if (logDateRange.start) filters.start_date = logDateRange.start;
-            if (logDateRange.end) filters.end_date = logDateRange.end;
-            
-            const data = await adminService.getActivity(filters);
-            setLogs(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error('Failed to fetch activity logs', error);
-            setLogError('Failed to retrieve event chronology.');
-        } finally {
-            setLoadingLogs(false);
-        }
-    };
-
-    useEffect(() => {
-        if (connected && lastMessage && isStreaming) {
-            if (lastMessage.type === 'admin_log' || lastMessage.type === 'activity') {
-                setLogs(prev => [lastMessage.data, ...prev].slice(0, 100));
-            }
-        }
-    }, [lastMessage, connected, isStreaming]);
-
-    const handleExportLogs = async () => {
-        try {
-            const result = await adminService.exportActivity();
-            const data = result.data;
-            const headers = ['ID', 'Admin ID', 'Action', 'Recipient', 'Subject', 'Timestamp'];
-            const rows = data.map(l => [l.id || l._id, l.admin_id, l.action, l.recipient || '', l.subject || '', l.timestamp]);
-            const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-        } catch (err) {
-            alert('Failed to export activity logs');
-        }
-    };
-
+export default function ActivityLog({ 
+    logs, 
+    loading, 
+    error, 
+    searchTerm, 
+    onSearchChange, 
+    filterAction, 
+    onFilterChange, 
+    dateRange, 
+    onDateRangeChange, 
+    onRefresh 
+}) {
     // Icons for actions
     const getActionIcon = (action) => {
         switch (action) {
@@ -99,72 +31,18 @@ export default function ActivityPage() {
         }
     };
 
-    // Derived Data
-    const filteredLogs = logs.filter(log => {
-        const logDate = new Date(log.timestamp);
-        const start = logDateRange.start ? new Date(logDateRange.start) : null;
-        const end = logDateRange.end ? new Date(logDateRange.end) : null;
-        if (end) end.setHours(23, 59, 59, 999);
-
-        const matchesSearch =
-            log.action?.toLowerCase().includes(logSearchTerm.toLowerCase()) ||
-            log.subject?.toLowerCase().includes(logSearchTerm.toLowerCase()) ||
-            log.recipient?.toLowerCase().includes(logSearchTerm.toLowerCase()) ||
-            log.target_email?.toLowerCase().includes(logSearchTerm.toLowerCase());
-
-        const matchesFilter = logFilterAction === 'all' || log.action === logFilterAction;
-        const matchesDate = (!start || logDate >= start) && (!end || logDate <= end);
-
-        return matchesSearch && matchesFilter && matchesDate;
-    });
-
     const stats = {
-        total: filteredLogs.length,
-        critical: filteredLogs.filter(l => ['delete_user', 'update_security_rules', 'ban_user'].includes(l.action)).length,
-        admins: new Set(filteredLogs.map(l => l.admin_id)).size
+        total: logs.length,
+        critical: logs.filter(l => ['delete_user', 'update_security_rules', 'ban_user'].includes(l.action)).length,
+        admins: new Set(logs.map(l => l.admin_id)).size
     };
 
     const uniqueActions = ['all', ...new Set(logs.map(l => l.action))];
 
     return (
-        <div className="activity-page animate-fadeInUp">
-            {/* Header */}
-            <div className="page-header mb-8">
-                <div>
-                    <h2 className="page-title flex items-center gap-3">
-                        <History className="icon-glow text-primary" size={28} />
-                        Activity Logs
-                    </h2>
-                    <p className="dashboard-subtitle mt-1">
-                        Immutable audit trail and real-time event monitoring.
-                    </p>
-                </div>
-
-                <div className="flex gap-3">
-                    <Button
-                        variant={isStreaming ? "secondary" : "outline"}
-                        className={`${isStreaming ? "border-green-500/30 text-green-400 bg-green-500/5" : ""} px-6`}
-                        onClick={() => setIsStreaming(!isStreaming)}
-                    >
-                        <History size={18} className={isStreaming ? "fill-green-400 animate-pulse" : ""} />
-                        {isStreaming ? 'Live Monitoring' : 'Offline Vault'}
-                    </Button>
-                    <Button variant="outline" className="px-6" onClick={handleExportLogs}>
-                        <Download size={18} />
-                        Export Data
-                    </Button>
-                </div>
-            </div>
-
-            {logError && (
-                <div className="status-message status-error border-red-500/20 bg-red-500/5 p-4 rounded-xl flex items-center gap-3 mb-8">
-                    <AlertCircle size={20} className="text-red-400" />
-                    <span className="text-xs font-medium text-red-200">{logError}</span>
-                </div>
-            )}
-
+        <div className="space-y-6 animate-fadeIn">
             {/* KPI Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="border-white/5 bg-blue-500/5 flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
                         <BarChart3 size={24} />
@@ -195,7 +73,7 @@ export default function ActivityPage() {
             </div>
 
             {/* Filters */}
-            <Card className="border-white/5 bg-white/[0.01] mb-6">
+            <Card className="border-white/5 bg-white/[0.01]">
                 <div className="flex flex-col md:flex-row gap-6 items-end">
                     <div className="flex-1 w-full text-left">
                         <label className="text-[10px] uppercase font-bold tracking-widest text-dim mb-3 block">Record Pattern Matching</label>
@@ -204,8 +82,8 @@ export default function ActivityPage() {
                             <input
                                 type="text"
                                 placeholder="Search by operation, operator, or target..."
-                                value={logSearchTerm}
-                                onChange={e => setLogSearchTerm(e.target.value)}
+                                value={searchTerm}
+                                onChange={e => onSearchChange(e.target.value)}
                                 className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-dim"
                             />
                         </div>
@@ -214,8 +92,8 @@ export default function ActivityPage() {
                         <label className="text-[10px] uppercase font-bold tracking-widest text-dim mb-3 block">Action Scope</label>
                         <select
                             className="h-12 bg-slate-900/50 border border-white/5 rounded-xl px-4 text-sm w-full focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer text-white"
-                            value={logFilterAction}
-                            onChange={e => setLogFilterAction(e.target.value)}
+                            value={filterAction}
+                            onChange={e => onFilterChange(e.target.value)}
                         >
                             {uniqueActions.map(action => (
                                 <option key={action} value={action} className="bg-slate-900">
@@ -232,8 +110,8 @@ export default function ActivityPage() {
                                 <input 
                                     type="date" 
                                     className="bg-slate-900/50 border border-white/5 rounded-xl h-12 pl-10 pr-2 text-sm text-white outline-none focus:border-blue-500/50 transition-all w-36"
-                                    value={logDateRange.start}
-                                    onChange={e => setLogDateRange(prev => ({...prev, start: e.target.value}))}
+                                    value={dateRange.start}
+                                    onChange={e => onDateRangeChange('start', e.target.value)}
                                 />
                             </div>
                             <div className="relative">
@@ -241,19 +119,19 @@ export default function ActivityPage() {
                                 <input 
                                     type="date" 
                                     className="bg-slate-900/50 border border-white/5 rounded-xl h-12 pl-10 pr-2 text-sm text-white outline-none focus:border-blue-500/50 transition-all w-36"
-                                    value={logDateRange.end}
-                                    onChange={e => setLogDateRange(prev => ({...prev, end: e.target.value}))}
+                                    value={dateRange.end}
+                                    onChange={e => onDateRangeChange('end', e.target.value)}
                                 />
                             </div>
                         </div>
                     </div>
                     <Button
                         variant="secondary"
-                        onClick={fetchLogs}
-                        disabled={loadingLogs}
+                        onClick={onRefresh}
+                        disabled={loading}
                         className="h-12 w-12 p-0 flex items-center justify-center rounded-xl"
                     >
-                        <RefreshCw size={18} className={loadingLogs ? 'animate-spin' : ''} />
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                     </Button>
                 </div>
             </Card>
@@ -261,19 +139,19 @@ export default function ActivityPage() {
             {/* Timeline */}
             <div className="timeline-container relative mx-auto px-4">
                 <div className="timeline-line"></div>
-                {loadingLogs && logs.length === 0 ? (
+                {loading && logs.length === 0 ? (
                     <div className="py-20 text-center shimmer-effect">
                         <ActivityIcon className="mx-auto mb-4 text-blue-400 animate-pulse icon-glow" size={48} />
                         <p className="text-dim italic">Synchronizing event chronology...</p>
                     </div>
-                ) : filteredLogs.length === 0 ? (
+                ) : logs.length === 0 ? (
                     <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
                         <AlertCircle size={48} className="mx-auto mb-4 text-dim opacity-10" />
                         <p className="text-dim italic">No matching event logs found in the selected temporal range.</p>
                     </div>
                 ) : (
                     <div className="space-y-8 pb-20">
-                        {filteredLogs.map((log, index) => (
+                        {logs.map((log, index) => (
                             <div key={log.id || index} className="timeline-item animate-fadeInUp" style={{ animationDelay: `${index * 50}ms` }}>
                                 <div className="timeline-marker group">
                                     <div className={`timeline-marker-inner transition-all ${['delete_user', 'update_security_rules'].includes(log.action) ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-white/5 shadow-[0_0_15px_rgba(0,0,0,0.5)]'}`}>

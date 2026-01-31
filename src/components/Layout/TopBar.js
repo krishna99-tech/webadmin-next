@@ -44,6 +44,16 @@ const TopBar = () => {
     }
   }, [lastMessage]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showNotifications) {
+        setShowNotifications(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showNotifications]);
+
   /* Breadcrumb */
   const pathSegments = pathname.split('/').filter(Boolean);
   const breadcrumb =
@@ -79,6 +89,7 @@ const TopBar = () => {
             type="text"
             placeholder="Quantum Search..."
             className="text-xs"
+            aria-label="Search dashboard"
           />
         </div>
 
@@ -87,9 +98,12 @@ const TopBar = () => {
           <button
             className={`topbar-icon-btn ${showNotifications ? 'bg-white/10' : ''}`}
             onClick={() => setShowNotifications(!showNotifications)}
+            aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+            aria-haspopup="true"
+            aria-expanded={showNotifications}
           >
             <Bell size={20} className={unreadCount > 0 ? 'animate-pulse text-blue-400' : ''} />
-            {unreadCount > 0 && <span className="topbar-notification-dot" />}
+            {unreadCount > 0 && <span className="topbar-notification-dot" aria-hidden="true" />}
           </button>
 
           {showNotifications && (
@@ -98,7 +112,11 @@ const TopBar = () => {
                 className="fixed inset-0 z-10"
                 onClick={() => setShowNotifications(false)}
               />
-              <div className="absolute right-0 mt-2 w-80 bg-[#111] border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden animate-fadeInUp">
+              <div 
+                className="absolute right-0 mt-2 w-80 bg-[#111] border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden animate-fadeInUp"
+                role="dialog"
+                aria-label="Notifications"
+              >
                 <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
                   <h4 className="text-xs font-bold uppercase tracking-widest text-white">Alert Center</h4>
                   {unreadCount > 0 && (
@@ -163,7 +181,9 @@ const TopBar = () => {
             <div className="topbar-user-name !text-[11px] font-bold group-hover:text-blue-400 transition-colors">
               {currentUser?.full_name || currentUser?.username || 'Administrator'}
             </div>
-            <div className="text-[9px] text-dim uppercase tracking-tighter">System Root</div>
+            <div className="text-[9px] text-dim uppercase tracking-tighter">
+              {currentUser?.role || (currentUser?.is_admin ? 'Admin' : 'User')}
+            </div>
           </div>
 
           <div className="topbar-avatar !bg-blue-500/5 !border-blue-500/20 shadow-inner group-hover:neon-border transition-all">

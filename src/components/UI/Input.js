@@ -22,11 +22,13 @@ const Input = ({
       <input
         id={id}
         className={`input-field ${error ? 'input-error' : ''}`}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : (hint ? `${id}-hint` : undefined)}
         {...props}
       />
 
-      {error && <p className="input-error-text">{error}</p>}
-      {!error && hint && <p className="input-hint">{hint}</p>}
+      {error && <p id={`${id}-error`} className="input-error-text" role="alert">{error}</p>}
+      {!error && hint && <p id={`${id}-hint`} className="input-hint">{hint}</p>}
     </div>
   );
 };

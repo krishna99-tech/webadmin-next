@@ -2,32 +2,39 @@
 
 import React, { useEffect, useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import Card from '@/components/UI/Card';
 import Button from '@/components/UI/Button';
+import Card from '@/components/UI/Card';
 import deviceService from '@/services/deviceService';
 import adminService from '@/services/adminService';
+import iotService from '@/services/iotService';
 import { AuthContext } from '@/context/AuthContext';
-import { Smartphone, Plus, Trash2, Download, AlertCircle, Eye, XCircle, Search, RefreshCw } from 'lucide-react';
+import { 
+    Smartphone, Download, RefreshCw, Plus, Power, Edit, Trash2, 
+    Wifi, WifiOff, AlertTriangle, X, Info
+} from 'lucide-react';
 
 export default function Devices() {
     const [devices, setDevices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const router = useRouter();
-    const { currentUser } = useContext(AuthContext);
-    const isAdmin = currentUser?.is_admin;
-
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [newDevice, setNewDevice] = useState({ name: '', user_id: '' });
+    const [showModal, setShowModal] = useState(false);
+    const [selectedDevice, setSelectedDevice] = useState(null);
+    const [activeFleetTab, setActiveFleetTab] = useState('total');
     const [users, setUsers] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [activeFleetTab, setActiveFleetTab] = useState('total'); // total, active, orphaned
+
+    // Modal form state
+    const [formData, setFormData] = useState({});
+    const [formLoading, setFormLoading] = useState(false);
 
     // Transfer Modal State
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [transferDevice, setTransferDevice] = useState(null);
     const [transferUserId, setTransferUserId] = useState('');
     const [transferLoading, setTransferLoading] = useState(false);
+
+    const router = useRouter();
+    const { currentUser } = useContext(AuthContext);
+    const isAdmin = currentUser?.is_admin;
 
     const fetchDevices = async () => {
         setLoading(true);
@@ -55,35 +62,41 @@ export default function Devices() {
         fetchDevices();
     }, [isAdmin]);
 
-    const handleCreateDevice = async () => {
-        try {
-            if (!newDevice.name) return alert('Name is required');
-            if (isAdmin && !newDevice.user_id) return alert('Owner is required');
-
-            setLoading(true);
-            if (isAdmin) {
-                await adminService.createDeviceAdmin(newDevice);
-            } else {
-                await deviceService.addDevice({ name: newDevice.name });
-            }
-
-            setShowAddModal(false);
-            setNewDevice({ name: '', user_id: '' });
-            fetchDevices();
-        } catch (err) {
-            alert('Failed to create device: ' + (err.response?.data?.detail || err.message));
-        } finally {
-            setLoading(false);
+    // Initialize form data when modal opens
+    useEffect(() => {
+        if (selectedDevice) {
+            setFormData({
+                name: selectedDevice.name || '',
+                user_id: selectedDevice.user_id || '',
+                status: selectedDevice.status || 'offline'
+            });
+        } else {
+            setFormData({
+                name: '',
+                user_id: '',
+                status: 'offline'
+            });
         }
-    };
+    }, [selectedDevice, showModal]);
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Delete this device?')) return;
+    const handleAction = async (device, action) => {
         try {
-            await deviceService.deleteDevice(id);
-            setDevices(prev => prev.filter(d => (d.id || d._id) !== id));
+            if (action === 'delete') {
+                if (!window.confirm('Delete this device permanently?')) return;
+                await iotService.deleteDevice(device.id || device._id);
+                setDevices(prev => prev.filter(d => (d.id || d._id) !== (device.id || device._id)));
+            } else if (action === 'toggle') {
+                const newStatus = device.status === 'online' ? 'offline' : 'online';
+                await iotService.controlDevice(device.id || device._id, 'toggle_power', { status: newStatus });
+                setDevices(prev => prev.map(d => 
+                    (d.id || d._id) === (device.id || device._id) ? { ...d, status: newStatus } : d
+                ));
+            } else if (action === 'transfer') {
+                setTransferDevice(device);
+                setShowTransferModal(true);
+            }
         } catch (err) {
-            alert('Failed to delete device: ' + (err?.response?.data?.detail || err.message));
+            alert('Operation failed: ' + (err?.response?.data?.detail || err.message));
         }
     };
 
@@ -106,24 +119,11 @@ export default function Devices() {
     const handleExport = async () => {
         try {
             const { data } = await adminService.exportDevices();
-
-            // Convert to CSV
             const headers = ['ID', 'Name', 'Status', 'Last Active', 'User ID', 'Owner'];
             const rows = data.map(d => [
-                d.id,
-                d.name,
-                d.status,
-                d.last_active || '',
-                d.user_id || '',
-                d.owner_name || ''
+                d.id, d.name, d.status, d.last_active || '', d.user_id || '', d.owner_name || ''
             ]);
-
-            const csv = [
-                headers.join(','),
-                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-            ].join('\n');
-
-            // Download
+            const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -136,31 +136,70 @@ export default function Devices() {
         }
     };
 
-    const filteredDevices = devices.filter(d => {
-        const search = searchTerm.toLowerCase();
-        return (
-            d.name?.toLowerCase().includes(search) ||
-            (d.id || d._id)?.toLowerCase().includes(search) ||
-            d.owner_name?.toLowerCase().includes(search) ||
-            d.owner_email?.toLowerCase().includes(search)
-        );
+    const handleModalSubmit = async (e) => {
+        e.preventDefault();
+        setFormLoading(true);
+        try {
+            if (selectedDevice) {
+                await iotService.updateDevice(selectedDevice.id || selectedDevice._id, formData);
+            } else {
+                await iotService.createDevice(formData);
+            }
+            setShowModal(false);
+            setSelectedDevice(null);
+            fetchDevices();
+        } catch (err) {
+            alert('Operation failed: ' + (err?.response?.data?.detail || err.message));
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
+    const displayDevices = devices.filter(d => {
+        if (activeFleetTab === 'active') return d.status === 'online';
+        if (activeFleetTab === 'orphaned') return !d.user_id || d.owner_name?.includes('Orphaned');
+        return true;
     });
 
+    const getStatusBadge = (status) => {
+        const classes = {
+            online: 'status-badge-online',
+            offline: 'status-badge-offline',
+            warning: 'status-badge-warning'
+        };
+        return <span className={`status-badge ${classes[status] || 'status-badge-offline'}`}>{status}</span>;
+    };
+
+    const getStatusIcon = (status) => {
+        switch(status) {
+            case 'online': return <Wifi className="w-4 h-4 text-green-500" />;
+            case 'offline': return <WifiOff className="w-4 h-4 text-red-500" />;
+            case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+            default: return <Wifi className="w-4 h-4 text-gray-500" />;
+        }
+    };
+
     return (
-        <div className="relative">
+        <div className="devices-page animate-fadeInUp">
+            {/* Header */}
             <div className="page-header mb-8">
                 <div>
-                    <h2 className="page-title">Device Management</h2>
-                    <p className="dashboard-subtitle">Complete registry of active, inactive, and orphaned silicon signatures across the network.</p>
+                    <h2 className="page-title flex items-center gap-3">
+                        <Smartphone className="icon-glow text-primary" size={28} />
+                        Hardware Fleet
+                    </h2>
+                    <p className="dashboard-subtitle mt-1">
+                        Silicon identity registry and edge node orchestration.
+                    </p>
                 </div>
-                <div className="flex gap-4">
-                    <Button onClick={handleExport} variant="secondary">
+                <div className="flex gap-3">
+                    <Button onClick={handleExport} variant="outline">
                         <Download size={18} />
-                        Export Data
+                        Export Registry
                     </Button>
-                    <Button onClick={() => setShowAddModal(true)} className="btn-broadcast-premium shadow-primary group">
-                        <Plus size={18} className="group-hover:icon-pulse" />
-                        Register Device
+                    <Button onClick={() => { setSelectedDevice(null); setShowModal(true); }} className="btn-primary shadow-primary">
+                        <Plus size={18} />
+                        Sync New Device
                     </Button>
                 </div>
             </div>
@@ -187,180 +226,185 @@ export default function Devices() {
                 </div>
             )}
 
-            {/* Global Search Interface */}
-            <Card className="mb-8 border-white/5 bg-white/[0.01]">
-                <div className="flex flex-col md:flex-row gap-6 items-center">
-                    <div className="flex-1 w-full text-left">
-                        <label className="text-[10px] uppercase font-bold tracking-widest text-dim mb-3 block">Neural Search Pattern</label>
-                        <div className="topbar-search w-full bg-slate-900/50 border border-white/5 rounded-xl h-12 px-4 flex items-center gap-3 focus-within:border-blue-500/50 transition-all">
-                            <Search size={18} className="text-dim" />
-                            <input
-                                type="text"
-                                placeholder={`Filter ${activeFleetTab} fleet by ID, Name, or Owner...`}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-dim"
-                            />
-                        </div>
+            {/* Main Content */}
+            <div className="relative">
+                {loading && (
+                    <div className="absolute inset-0 z-10 bg-slate-900/10 backdrop-blur-[2px] flex items-center justify-center rounded-3xl min-h-[200px]">
+                        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
                     </div>
+                )}
+                
+                {/* Device Table */}
+                <div className="space-y-6 animate-fadeIn">
+                    <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md overflow-hidden rounded-2xl">
+                        <div className="overflow-x-auto">
+                            <table className="iot-table">
+                                <thead>
+                                    <tr>
+                                        <th>Device Name</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Location</th>
+                                        <th>Battery</th>
+                                        <th>Last Pulse</th>
+                                        <th className="text-right">Operations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {displayDevices.map(device => (
+                                        <tr key={device.id || device._id}>
+                                            <td>
+                                                <div className="flex items-center gap-3">
+                                                    {getStatusIcon(device.status)}
+                                                    <span className="font-medium text-white">{device.name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="text-sm text-dim capitalize">{device.type}</td>
+                                            <td>{getStatusBadge(device.status)}</td>
+                                            <td className="text-sm text-dim">{device.location}</td>
+                                            <td>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="battery-bar-container">
+                                                        <div 
+                                                            className={`battery-bar-fill ${device.battery > 50 ? 'bg-green-500' : device.battery > 20 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                                            style={{ width: `${device.battery}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className="text-[10px] text-dim">{device.battery}%</span>
+                                                </div>
+                                            </td>
+                                            <td className="text-sm text-dim font-mono">
+                                                {device.last_active ? new Date(device.last_active).toLocaleString() : 'Never'}
+                                            </td>
+                                            <td className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button 
+                                                        onClick={() => handleAction(device, 'toggle')} 
+                                                        title="Toggle Power"
+                                                        className="p-2 hover:bg-blue-500/10 rounded-lg text-blue-400 transition-colors"
+                                                    >
+                                                        <Power size={16} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => { setSelectedDevice(device); setShowModal(true); }} 
+                                                        title="Edit Config"
+                                                        className="p-2 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors"
+                                                    >
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleAction(device, 'delete')} 
+                                                        title="Decommission"
+                                                        className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {displayDevices.length === 0 && (
+                                        <tr>
+                                            <td colSpan="7" className="p-8 text-center text-dim italic">
+                                                No devices registered in your fleet.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
                 </div>
-            </Card>
+            </div>
 
-            {error && (
-                <div className="status-message status-error mb-6">
-                    <AlertCircle size={20} className="mr-2" />
-                    <span>{error}</span>
-                </div>
-            )}
-
-            {loading && !showAddModal ? (
-                <div className="text-center py-20 flex flex-col items-center gap-4">
-                    <Smartphone size={40} className="text-blue-500/50 animate-pulse" />
-                    <p className="text-sm text-dim italic">Synchronizing registry state...</p>
-                </div>
-            ) : filteredDevices.length === 0 ? (
-                <Card className="empty-state py-20 border-white/5 bg-white/[0.01]">
-                    <Smartphone size={48} className="empty-state-icon opacity-20" />
-                    <h3 className="empty-state-title text-dim">No Signatures Detected</h3>
-                    <p className="empty-state-text text-dim">The current neural pattern search yielded no device matches in the active dimension.</p>
-                    {searchTerm && (
-                        <Button variant="outline" className="mt-4" onClick={() => setSearchTerm('')}>Reset Search</Button>
-                    )}
-                </Card>
-            ) : (
-                <div className="device-grid">
-                    {filteredDevices
-                        .filter(d => {
-                            if (activeFleetTab === 'active') return d.status === 'online';
-                            if (activeFleetTab === 'orphaned') return !d.user_id || d.owner_name?.includes('Orphaned');
-                            return true;
-                        })
-                        .map((device) => (
-                            <Card key={device.id || device._id} className="device-card hover-border-blue transition-colors group">
-                                <div className="device-card-header">
-                                    <div className="device-icon group-hover-bg-blue !bg-white/5 border-white/5 shadow-inner group-hover:neon-border transition-all">
-                                        <Smartphone size={24} className="icon-glow" />
-                                    </div>
-                                    <div className={`status-badge ${device.status} flex items-center gap-1.5`}>
-                                        {device.status === 'online' && <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></div>}
-                                        {device.status}
-                                    </div>
+            {/* Device Modal */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] animate-fadeIn p-4">
+                    <Card className="w-full max-w-md border-white/10 bg-slate-950/90 backdrop-blur-xl p-0 shadow-2xl relative overflow-hidden border-glow">
+                        {/* Header */}
+                        <div className="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                    <Smartphone size={20} />
                                 </div>
-
-                                <h3 className="text-lg font-semibold mb-1 text-white">{device.name}</h3>
-                                <p className="text-xs text-dim font-mono mb-2 break-all">ID: {device.id || device._id}</p>
-
-                                {isAdmin && (
-                                    <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/5 relative group/owner">
-                                        <p className="text-[10px] text-dim uppercase tracking-wider mb-1">Assigned Owner</p>
-                                        <p className={`text-xs font-bold ${device.owner_name?.includes('Orphaned') ? 'text-orange-400' : 'text-blue-400'}`}>
-                                            {device.owner_name || 'System'}
-                                        </p>
-                                        <p className="text-[10px] text-dim">{device.owner_email || 'No email associated'}</p>
-
-                                        <button
-                                            onClick={() => {
-                                                setTransferDevice(device);
-                                                setShowTransferModal(true);
-                                            }}
-                                            className="absolute top-2 right-2 p-1.5 bg-white/5 rounded-lg border border-white/5 opacity-0 group-hover/owner:opacity-100 transition-all hover:bg-white/10 text-white"
-                                            title="Transfer Ownership"
-                                        >
-                                            <RefreshCw size={12} />
-                                        </button>
-                                    </div>
-                                )}
-
-                                <div className="device-footer mt-6 pt-4 border-t border-white/5">
-                                    <span className="text-xs text-dim">
-                                        {device.last_active ? new Date(device.last_active).toLocaleString() : 'Never Active'}
-                                    </span>
-                                    <div className="device-actions">
-                                        <button
-                                            onClick={() => router.push(`/devices/${device.id || device._id}`)}
-                                            className="icon-btn primary hover-text-blue"
-                                            title="View Details"
-                                        >
-                                            <Eye size={18} />
-                                        </button>
-
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDelete(device.id || device._id);
-                                            }}
-                                            className="icon-btn danger hover-text-red"
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-white leading-tight">
+                                        {selectedDevice ? 'Modify Device' : 'Register New Device'}
+                                    </h3>
+                                    <p className="text-[10px] text-dim uppercase tracking-wider">Hardware Registry</p>
                                 </div>
-                            </Card>
-                        ))}
-                </div>
-            )}
-
-            {/* Add Device Modal */}
-            {showAddModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
-                    <Card className="w-full max-w-md border-blue-500/30">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold">Register New Device</h3>
-                            <button onClick={() => setShowAddModal(false)} className="text-dim hover:text-white">
-                                <XCircle size={20} />
+                            </div>
+                            <button 
+                                onClick={() => setShowModal(false)} 
+                                className="text-dim hover:text-white transition-colors"
+                            >
+                                <X size={20} />
                             </button>
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs text-dim uppercase tracking-wider mb-2">Device Name</label>
-                                <input
+                        <form onSubmit={handleModalSubmit} className="p-6 space-y-5">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase font-bold tracking-widest text-dim ml-1">Device Name</label>
+                                <input 
                                     type="text"
-                                    className="msg-textarea !min-h-[45px]"
-                                    placeholder="Enter identifier (e.g. Workspace-01)"
-                                    value={newDevice.name}
-                                    onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value })}
+                                    required
+                                    className="input-field w-full"
+                                    placeholder="e.g. Edge-Node-01"
+                                    value={formData.name || ''}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase font-bold tracking-widest text-dim ml-1">Assign Owner</label>
+                                <select 
+                                    className="input-field w-full bg-slate-800"
+                                    value={formData.user_id || ''}
+                                    onChange={e => setFormData({ ...formData, user_id: e.target.value })}
+                                >
+                                    <option value="">System / Orphaned</option>
+                                    {users.map(u => (
+                                        <option key={u.id || u._id} value={u.id || u._id}>{u.username} ({u.email || 'No email'})</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                            {isAdmin && (
-                                <div>
-                                    <label className="block text-xs text-dim uppercase tracking-wider mb-2">Assign Owner</label>
-                                    <select
-                                        className="msg-textarea !min-h-[45px] w-full bg-black/50"
-                                        value={newDevice.user_id}
-                                        onChange={(e) => setNewDevice({ ...newDevice, user_id: e.target.value })}
-                                    >
-                                        <option value="">Select a user...</option>
-                                        {users.map(u => (
-                                            <option key={u.id} value={u.id}>
-                                                {u.username} ({u.email || 'No email'})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
+                            <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex gap-3">
+                                <Info size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                                <p className="text-[11px] text-blue-200/70 leading-relaxed italic">
+                                    Changes will be synchronized with the edge network and updated in the global registry immediately upon commitment.
+                                </p>
+                            </div>
 
-                            <div className="pt-4 flex gap-3">
-                                <Button variant="secondary" className="flex-1" onClick={() => setShowAddModal(false)}>Cancel</Button>
-                                <Button className="flex-1 btn-broadcast-premium" onClick={handleCreateDevice} loading={loading}>
-                                    Register Device
+                            <div className="flex gap-3 pt-2">
+                                <Button 
+                                    type="button"
+                                    variant="outline" 
+                                    className="flex-1" 
+                                    onClick={() => setShowModal(false)}
+                                >
+                                    Abort
+                                </Button>
+                                <Button 
+                                    type="submit" 
+                                    className="flex-1 btn-primary shadow-lg shadow-primary/20"
+                                    loading={formLoading}
+                                >
+                                    {selectedDevice ? 'Update Entity' : 'Create Entity'}
                                 </Button>
                             </div>
-                        </div>
+                        </form>
                     </Card>
                 </div>
             )}
 
             {/* Transfer Ownership Modal */}
             {showTransferModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
-                    <Card className="w-full max-w-sm border-purple-500/30">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn p-4">
+                    <Card className="w-full max-w-sm border-purple-500/30 bg-slate-900 p-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold">Transfer Ownership</h3>
+                            <h3 className="text-xl font-bold text-white">Transfer Ownership</h3>
                             <button onClick={() => setShowTransferModal(false)} className="text-dim hover:text-white">
-                                <XCircle size={20} />
+                                <X size={20} />
                             </button>
                         </div>
 
@@ -374,13 +418,13 @@ export default function Devices() {
                             <div>
                                 <label className="block text-xs text-dim uppercase tracking-wider mb-2">New Identity Owner</label>
                                 <select
-                                    className="msg-textarea !min-h-[45px] w-full bg-black/50"
+                                    className="input-field w-full bg-slate-800"
                                     value={transferUserId}
                                     onChange={(e) => setTransferUserId(e.target.value)}
                                 >
                                     <option value="">Select identity...</option>
                                     {users.map(u => (
-                                        <option key={u.id} value={u.id}>
+                                        <option key={u.id || u._id} value={u.id || u._id}>
                                             {u.username} ({u.email || 'No email'})
                                         </option>
                                     ))}
@@ -389,7 +433,7 @@ export default function Devices() {
 
                             <div className="pt-4 flex gap-3">
                                 <Button variant="secondary" className="flex-1" onClick={() => setShowTransferModal(false)}>Cancel</Button>
-                                <Button className="flex-1 !bg-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.3)]" onClick={handleTransfer} loading={transferLoading}>
+                                <Button className="flex-1 !bg-purple-600 shadow-lg" onClick={handleTransfer} loading={transferLoading}>
                                     Confirm Transfer
                                 </Button>
                             </div>
