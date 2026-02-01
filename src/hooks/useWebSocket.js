@@ -17,6 +17,7 @@ export default function useWebSocket() {
     const [isConnected, setIsConnected] = useState(false);
     const [lastMessage, setLastMessage] = useState(null);
     const listenersRef = useRef(new Map());
+    const connectRef = useRef(null);
 
     // Convert HTTP URL to WebSocket URL
     const getWebSocketUrl = useCallback(() => {
@@ -95,8 +96,8 @@ export default function useWebSocket() {
                 }
             };
 
-            ws.onerror = (error) => {
-                console.error('❌ WebSocket error:', error);
+            ws.onerror = () => {
+                console.error('❌ WebSocket connection error');
             };
 
             ws.onclose = () => {
@@ -111,7 +112,9 @@ export default function useWebSocket() {
                 // Attempt to reconnect after 3 seconds
                 reconnectTimeoutRef.current = setTimeout(() => {
                     console.log('🔄 Attempting to reconnect...');
-                    connect();
+                    if (connectRef.current) {
+                        connectRef.current();
+                    }
                 }, 3000);
             };
 
@@ -121,15 +124,30 @@ export default function useWebSocket() {
         }
     }, [wsToken, getWebSocketUrl]);
 
+    // Keep connect reference updated to avoid circular dependencies
+    useEffect(() => {
+        connectRef.current = connect;
+    }, [connect]);
+
     // Disconnect from WebSocket
     const disconnect = useCallback(() => {
         if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
         }
         if (wsRef.current) {
+            // Clear ping interval if it exists
+            if (wsRef.current.pingInterval) {
+                clearInterval(wsRef.current.pingInterval);
+            }
+
+            // Remove listeners to prevent reconnect logic from firing on intentional disconnect
+            wsRef.current.onclose = null;
+            wsRef.current.onerror = null;
+
             wsRef.current.close();
             wsRef.current = null;
         }
+        setIsConnected(false);
     }, []);
 
     // Connect on mount, disconnect on unmount

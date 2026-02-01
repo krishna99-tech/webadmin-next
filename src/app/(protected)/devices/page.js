@@ -22,8 +22,8 @@ import {
 
 export default function DevicesPage() {
     const {
-        devices,
-        users,
+        devices = [],
+        users = [],
         loading,
         error,
         fetchDevices,
@@ -49,6 +49,7 @@ export default function DevicesPage() {
     const [sortOrder, setSortOrder] = useState('asc');
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [optimisticUpdates, setOptimisticUpdates] = useState({});
 
     useEffect(() => {
         fetchDevices();
@@ -66,13 +67,22 @@ export default function DevicesPage() {
         const id = device.id || device._id;
         try {
             if (action === 'delete') {
-                if (!window.confirm('Remove this device from the fleet permanently?')) return;
-                await deleteDevice(id);
-                toast.success('Device removed successfully');
+                setConfirmDelete(device);
             } else if (action === 'toggle') {
                 const newStatus = device.status === 'online' ? 'offline' : 'online';
-                await controlDevice(id, 'toggle_power', { status: newStatus });
-                toast.success(`Device ${newStatus}`);
+                setOptimisticUpdates(prev => ({ ...prev, [id]: { status: newStatus } }));
+
+                try {
+                    await controlDevice(id, 'toggle_power', { status: newStatus });
+                    toast.success(`Device ${newStatus}`);
+                } catch (err) {
+                    setOptimisticUpdates(prev => {
+                        const next = { ...prev };
+                        delete next[id];
+                        return next;
+                    });
+                    throw err;
+                }
             } else if (action === 'transfer') {
                 setTransferDevice(device);
                 setShowTransferModal(true);
@@ -145,8 +155,28 @@ export default function DevicesPage() {
         }
     };
 
+    const handleConfirmDelete = async () => {
+        if (!confirmDelete) return;
+        setDeleteLoading(true);
+        try {
+            await deleteDevice(confirmDelete.id || confirmDelete._id);
+            toast.success('Device removed successfully');
+            setConfirmDelete(null);
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || err.message || 'Operation failed');
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
     const displayDevices = useMemo(() => {
-        let list = devices.filter(d => {
+        if (!devices) return [];
+        const effectiveDevices = devices.map(d => {
+            const id = d.id || d._id;
+            return optimisticUpdates[id] ? { ...d, ...optimisticUpdates[id] } : d;
+        });
+
+        let list = effectiveDevices.filter(d => {
             if (activeFleetTab === 'active') return d.status === 'online';
             if (activeFleetTab === 'orphaned') return !d.user_id || d.owner_name?.includes('Orphaned');
             return true;
@@ -179,7 +209,7 @@ export default function DevicesPage() {
             return 0;
         });
         return list;
-    }, [devices, activeFleetTab, searchQuery, sortBy, sortOrder]);
+    }, [devices, activeFleetTab, searchQuery, sortBy, sortOrder, optimisticUpdates]);
 
     return (
         <div className="devices-page animate-fadeInUp">
@@ -265,7 +295,7 @@ export default function DevicesPage() {
             )}
 
             <div className="relative">
-                {loading && devices.length === 0 && (
+                {loading && (!devices || devices.length === 0) && (
                     <div className="absolute inset-0 z-10 bg-slate-900/10 backdrop-blur-[2px] flex items-center justify-center rounded-3xl min-h-[200px]">
                         <RefreshCw className="w-8 h-8 text-primary animate-spin" />
                     </div>
