@@ -35,9 +35,9 @@ export default function DeviceManager({ devices, onAction, onAddRequest, onEditR
                 </Button>
             </div>
 
-            <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md overflow-hidden rounded-2xl">
+            <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md overflow-hidden rounded-2xl card-hover-glow table-wrapper">
                 <div className="overflow-x-auto">
-                    <table className="iot-table">
+                    <table className="iot-table table-hover">
                         <thead>
                             <tr>
                                 <th>Device Name</th>
@@ -80,7 +80,7 @@ export default function DeviceManager({ devices, onAction, onAddRequest, onEditR
                                             <button 
                                                 onClick={() => onAction(device, 'toggle')} 
                                                 title="Toggle Power"
-                                                className="p-2 hover:bg-blue-500/10 rounded-lg text-blue-400 transition-colors"
+                                                className="p-2 hover:bg-blue-500/10 rounded-lg text-blue-400 transition-colors btn-press focus-ring"
                                             >
                                                 <Power size={16} />
                                             </button>
@@ -88,7 +88,7 @@ export default function DeviceManager({ devices, onAction, onAddRequest, onEditR
                                                 <button 
                                                     onClick={() => onTransferRequest(device)} 
                                                     title="Transfer Ownership"
-                                                    className="p-2 hover:bg-purple-500/10 rounded-lg text-purple-400 transition-colors"
+                                                    className="p-2 hover:bg-purple-500/10 rounded-lg text-purple-400 transition-colors btn-press focus-ring"
                                                 >
                                                     <RefreshCw size={16} />
                                                 </button>
@@ -96,14 +96,14 @@ export default function DeviceManager({ devices, onAction, onAddRequest, onEditR
                                             <button 
                                                 onClick={() => onEditRequest(device)} 
                                                 title="Edit"
-                                                className="p-2 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors"
+                                                className="p-2 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors btn-press focus-ring"
                                             >
                                                 <Edit size={16} />
                                             </button>
                                             <button 
                                                 onClick={() => onAction(device, 'delete')} 
                                                 title="Remove"
-                                                className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
+                                                className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors btn-press focus-ring"
                                             >
                                                 <Trash2 size={16} />
                                             </button>

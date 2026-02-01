@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useIoT } from '@/context/IoTContext';
 import { useToast } from '@/context/ToastContext';
 import UserAccessControl from '@/components/IoTConsole/UserAccessControl';
 import Modals from '@/components/IoTConsole/Modals';
 import Button from '@/components/UI/Button';
+import ConfirmModal from '@/components/UI/ConfirmModal';
+import EmptyState from '@/components/UI/EmptyState';
 import adminService from '@/services/adminService';
 import {
     Users as UsersIcon,
@@ -13,6 +15,7 @@ import {
     RefreshCw,
     Plus,
     ShieldAlert,
+    Search,
 } from 'lucide-react';
 
 export default function UsersPage() {
@@ -28,8 +31,11 @@ export default function UsersPage() {
     } = useIoT();
 
     const toast = useToast();
-    const [showModal, setShowModal] = React.useState(false);
-    const [selectedUser, setSelectedUser] = React.useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [confirmDelete, setConfirmDelete] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -42,20 +48,44 @@ export default function UsersPage() {
         }
     }, [error, toast, clearError]);
 
+    const filteredUsers = useMemo(() => {
+        if (!searchQuery.trim()) return users;
+        const q = searchQuery.toLowerCase().trim();
+        return users.filter(u =>
+            (u.username || '').toLowerCase().includes(q) ||
+            (u.email || '').toLowerCase().includes(q) ||
+            (u.full_name || '').toLowerCase().includes(q)
+        );
+    }, [users, searchQuery]);
+
     const handleAction = async (user, action) => {
         const id = user.id || user._id;
         try {
             if (action === 'delete') {
-                if (!window.confirm('Remove this user permanently?')) return;
-                await deleteUser(id);
-                toast.success('User removed');
-            } else if (action === 'toggle') {
+                setConfirmDelete(user);
+                return;
+            }
+            if (action === 'toggle') {
                 const newActiveState = !user.is_active;
                 await updateUser(id, { is_active: newActiveState });
                 toast.success(newActiveState ? 'Account activated' : 'Account suspended');
             }
         } catch (err) {
             toast.error(err?.response?.data?.detail || err.message || 'Operation failed');
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!confirmDelete) return;
+        setDeleteLoading(true);
+        try {
+            await deleteUser(confirmDelete.id || confirmDelete._id);
+            toast.success('User removed');
+            setConfirmDelete(null);
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || err.message || 'Delete failed');
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -138,19 +168,55 @@ export default function UsersPage() {
                 </div>
             )}
 
+            <div className="action-bar mb-6">
+                <div className="flex-1 min-w-[200px] max-w-md relative">
+                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
+                    <input
+                        type="text"
+                        placeholder="Search by username, email, name…"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="input-field input-glow w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-white/5 bg-white/5 focus:border-blue-500/50"
+                    />
+                </div>
+            </div>
+
             <div className="relative">
                 {loading && users.length === 0 && (
                     <div className="absolute inset-0 z-10 bg-slate-900/10 backdrop-blur-[2px] flex items-center justify-center rounded-3xl min-h-[200px]">
                         <RefreshCw className="w-8 h-8 text-primary animate-spin" />
                     </div>
                 )}
-                <UserAccessControl
-                    users={users}
-                    onAction={handleAction}
-                    onAddRequest={() => { setSelectedUser(null); setShowModal(true); }}
-                    onEditRequest={(u) => { setSelectedUser(u); setShowModal(true); }}
-                />
+                {filteredUsers.length === 0 ? (
+                    <EmptyState
+                        icon={UsersIcon}
+                        title={searchQuery ? 'No users match your search' : 'No users yet'}
+                        description={searchQuery ? 'Try a different search.' : 'Onboard your first user to get started.'}
+                        actionLabel={searchQuery ? undefined : 'Add User'}
+                        onAction={searchQuery ? undefined : () => { setSelectedUser(null); setShowModal(true); }}
+                        className="rounded-2xl"
+                    />
+                ) : (
+                    <UserAccessControl
+                        users={filteredUsers}
+                        onAction={handleAction}
+                        onAddRequest={() => { setSelectedUser(null); setShowModal(true); }}
+                        onEditRequest={(u) => { setSelectedUser(u); setShowModal(true); }}
+                    />
+                )}
             </div>
+
+            <ConfirmModal
+                open={!!confirmDelete}
+                title="Remove user"
+                message={confirmDelete ? `Remove "${confirmDelete.username || confirmDelete.full_name}" permanently? This cannot be undone.` : ''}
+                variant="danger"
+                confirmLabel="Remove"
+                cancelLabel="Cancel"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setConfirmDelete(null)}
+                loading={deleteLoading}
+            />
 
             <Modals
                 showDeviceModal={false}

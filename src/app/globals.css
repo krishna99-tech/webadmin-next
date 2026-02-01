@@ -3841,3 +3841,211 @@ p {
   transform: translateY(-4px);
   box-shadow: var(--shadow-primary);
 }
+
+/* =====================================
+   CONFIRM MODAL
+===================================== */
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: confirm-overlay-in 0.2s ease-out;
+}
+.confirm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+}
+.confirm-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: confirm-card-in 0.25s ease-out;
+}
+.confirm-modal-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+.confirm-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 0.5rem 0;
+}
+.confirm-modal-message {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+.confirm-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+@keyframes confirm-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes confirm-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* =====================================
+   CARD & BUTTON EFFECTS
+===================================== */
+.card-hover-glow {
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+.card-hover-glow:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.25);
+  transform: translateY(-4px);
+}
+
+.btn-active:active {
+  transform: scale(0.98);
+}
+.btn-press {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-press:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Table row effects */
+.iot-table tbody tr {
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+.iot-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.iot-table tbody tr:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Staggered list animation */
+.stagger-list > * {
+  animation: stagger-in 0.4s ease-out backwards;
+}
+.stagger-list > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-list > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-list > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-list > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-list > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-list > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-list > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-list > *:nth-child(8) { animation-delay: 0.4s; }
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Success / error flash */
+@keyframes flash-success {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(16, 185, 129, 0.3); }
+}
+@keyframes flash-error {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(239, 68, 68, 0.3); }
+}
+.flash-success {
+  animation: flash-success 0.6s ease-out;
+}
+.flash-error {
+  animation: flash-error 0.6s ease-out;
+}
+
+/* Gradient border animation (subtle) */
+.gradient-border {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* Input focus glow */
+.input-glow:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* Stat card number transition */
+.stat-value {
+  transition: opacity 0.3s ease;
+}
+.stat-card.loading .stat-value {
+  opacity: 0.5;
+}
+
+/* =====================================
+   ADDITIONAL EFFECTS
+===================================== */
+/* Button hover scale */
+.btn-hover-scale:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+.btn-hover-scale:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Subtle border glow on focus */
+.focus-glow:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Fade-in for modals and overlays */
+.fade-in-overlay {
+  animation: confirm-overlay-in 0.2s ease-out;
+}
+
+/* List item hover lift */
+.list-item-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.list-item-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}

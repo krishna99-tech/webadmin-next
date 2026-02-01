@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useCallback, useContext } from 'react';
 import Link from 'next/link';
 import { AuthContext } from '@/context/AuthContext';
 import useWebSocket from '@/hooks/useWebSocket';
 import Card from '@/components/UI/Card';
+import Button from '@/components/UI/Button';
+import SkeletonCard from '@/components/UI/SkeletonCard';
 import deviceService from '@/services/deviceService';
 import adminService from '@/services/adminService';
 import {
@@ -28,22 +30,23 @@ import {
     Shield,
     TrendingUp,
     Clock,
-    WifiOff
+    WifiOff,
+    RefreshCw
 } from 'lucide-react';
 
 /* ===============================
    STAT CARD
 ================================ */
-const StatCard = ({ title, value, icon: Icon, accent = 'blue', subtext }) => {
+const StatCard = ({ title, value, icon: Icon, accent = 'blue', subtext, loading }) => {
     return (
-        <Card className="stat-card group hover:scale-[1.02] transition-transform duration-300">
+        <Card className={`stat-card card-hover-glow group ${loading ? 'loading' : ''}`}>
             <div className={`stat-icon stat-${accent} !bg-${accent}-500/5 !border-${accent}-500/10 shadow-inner group-hover:neon-border transition-all`}>
                 <Icon size={28} className="icon-glow" />
             </div>
 
             <div className="stat-content">
                 <span className="stat-title">{title}</span>
-                <span className="stat-value">{value}</span>
+                <span className="stat-value">{loading ? '—' : value}</span>
                 {subtext && <span className="text-[10px] text-dim mt-1">{subtext}</span>}
             </div>
 
@@ -67,92 +70,132 @@ export default function Dashboard() {
     const [analytics, setAnalytics] = useState(null);
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(null);
+    const [autoRefresh, setAutoRefresh] = useState(false);
     const { currentUser } = useContext(AuthContext);
     const { isConnected: wsConnected } = useWebSocket();
     const isAdmin = currentUser?.is_admin ?? currentUser?.role === 'Admin';
 
+    const fetchDashboardData = useCallback(async (isRefresh = false) => {
+        if (!currentUser) return;
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
+
+        try {
+            const [devices, activityLogs, analyticsData] = await Promise.all([
+                isAdmin ? adminService.getAllDevices() : deviceService.getDevices(),
+                adminService.getActivity().catch(() => []),
+                isAdmin ? adminService.getAnalytics() : null
+            ]);
+
+            const online = devices.filter(d => d.status === 'online').length;
+
+            setStats({
+                totalDevices: devices.length,
+                onlineDevices: online,
+                offlineDevices: devices.length - online,
+                totalUsers: analyticsData?.current_stats?.total_users || 0
+            });
+
+            setActivities((activityLogs || []).slice(0, 8));
+            setAnalytics(analyticsData);
+            setLastUpdated(new Date());
+        } catch (error) {
+            console.error('Failed to fetch dashboard data', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, [currentUser, isAdmin]);
+
     useEffect(() => {
-        const fetchDashboardData = async () => {
-            if (!currentUser) return;
-
-            try {
-                const [devices, activityLogs, analyticsData] = await Promise.all([
-                    isAdmin ? adminService.getAllDevices() : deviceService.getDevices(),
-                    adminService.getActivity().catch(() => []),
-                    isAdmin ? adminService.getAnalytics() : null
-                ]);
-
-                const online = devices.filter(d => d.status === 'online').length;
-
-                setStats({
-                    totalDevices: devices.length,
-                    onlineDevices: online,
-                    offlineDevices: devices.length - online,
-                    totalUsers: analyticsData?.current_stats?.total_users || 0
-                });
-
-                setActivities((activityLogs || []).slice(0, 8));
-                setAnalytics(analyticsData);
-            } catch (error) {
-                console.error('Failed to fetch dashboard data', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchDashboardData();
-    }, [currentUser]);
+    }, [fetchDashboardData]);
+
+    useEffect(() => {
+        if (!autoRefresh) return;
+        const interval = setInterval(() => fetchDashboardData(true), 60000);
+        return () => clearInterval(interval);
+    }, [autoRefresh, fetchDashboardData]);
 
     return (
         <div className="dashboard-page animate-fadeIn">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="section-header flex-wrap gap-4 mb-8">
                 <div>
                     <h2 className="dashboard-title mb-1">System Overview</h2>
                     <p className="dashboard-subtitle">
                         Real-time analytics and platform health metrics
-                    </p>
-                </div>
-                {isAdmin && (
-                    <div className="flex gap-3 items-center flex-wrap">
-                        <span className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-full text-xs font-bold border border-green-500/20">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse border border-white" />
-                            API OPERATIONAL
-                        </span>
-                        <span className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">
-                            v1.2.4
-                        </span>
-                        {wsConnected && (
-                            <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/20">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                Real-time
+                        {lastUpdated && (
+                            <span className="text-dim text-xs ml-2">
+                                · Updated {lastUpdated.toLocaleTimeString()}
                             </span>
                         )}
-                    </div>
-                )}
+                    </p>
+                </div>
+                <div className="action-bar !mb-0 flex items-center gap-3">
+                    <Button
+                        variant="secondary"
+                        onClick={() => fetchDashboardData(true)}
+                        disabled={refreshing}
+                        className="btn-press"
+                    >
+                        <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+                        {refreshing ? 'Refreshing…' : 'Refresh'}
+                    </Button>
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            onClick={() => setAutoRefresh(!autoRefresh)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all btn-press ${autoRefresh ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-white/5 text-dim border-white/10 hover:border-white/20'}`}
+                        >
+                            {autoRefresh ? 'Auto 1m ✓' : 'Auto-refresh'}
+                        </button>
+                    )}
+                    {isAdmin && (
+                        <div className="flex gap-2 items-center flex-wrap">
+                            <span className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-full text-xs font-bold border border-green-500/20">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse border border-white" />
+                                API
+                            </span>
+                            <span className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">
+                                v1.2.4
+                            </span>
+                            {wsConnected && (
+                                <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/20">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                    Live
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* KPI GRID */}
-            <div className="dashboard-kpi-grid">
+            <div className="dashboard-kpi-grid stagger-list">
                 <StatCard
                     title="Total Fleet"
-                    value={loading ? '—' : stats.totalDevices}
+                    value={stats.totalDevices}
                     icon={Server}
                     accent="blue"
                     subtext="Instruments registered"
+                    loading={loading}
                 />
 
                 <StatCard
                     title="Active Now"
-                    value={loading ? '—' : stats.onlineDevices}
+                    value={stats.onlineDevices}
                     icon={Wifi}
                     accent="green"
-                    subtext={`${Math.round((stats.onlineDevices / stats.totalDevices) * 100) || 0}% Connection Rate`}
+                    subtext={stats.totalDevices > 0 ? `${Math.round((stats.onlineDevices / stats.totalDevices) * 100)}% online` : '—'}
+                    loading={loading}
                 />
 
                 <StatCard
                     title="Offline"
-                    value={loading ? '—' : stats.offlineDevices}
+                    value={stats.offlineDevices}
                     icon={WifiOff}
                     accent="red"
                     subtext="Requiring attention"
@@ -162,10 +205,11 @@ export default function Dashboard() {
                 {isAdmin && (
                     <StatCard
                         title="User Base"
-                        value={loading ? '—' : stats.totalUsers}
+                        value={stats.totalUsers}
                         icon={Users}
                         accent="purple"
-                        subtext="Registrations in database"
+                        subtext="Registrations"
+                        loading={loading}
                     />
                 )}
             </div>
@@ -304,7 +348,7 @@ export default function Dashboard() {
             {/* LOWER GRID */}
             <div className="dashboard-lower-grid">
                 {/* Quick Actions */}
-                <Card className="border-white/5">
+                <Card className="border-white/5 card-hover-glow">
                     <h3 className="card-title mb-6 flex items-center gap-2">
                         <Plus size={16} className="text-dim" />
                         Quick Command Hub
@@ -346,7 +390,7 @@ export default function Dashboard() {
                 </Card>
 
                 {/* Recent Activity */}
-                <Card className="border-white/5">
+                <Card className="border-white/5 card-hover-glow">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="card-title flex items-center gap-2">
                             <Activity size={16} className="text-green-400" />
@@ -355,7 +399,7 @@ export default function Dashboard() {
                         <Link href="/activity" className="text-[10px] text-blue-400 hover:underline uppercase tracking-widest font-bold">View Audit Trail</Link>
                     </div>
 
-                    <div className="activity-list space-y-4">
+                    <div className="activity-list space-y-4 stagger-list">
                         {activities.length === 0 ? (
                             <div className="text-center py-10">
                                 <p className="activity-empty text-dim italic">Awaiting platform events...</p>

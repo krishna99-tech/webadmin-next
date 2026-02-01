@@ -8,8 +8,10 @@ const Card = ({
   noPadding = false,
   hoverable = true,
   loading = false,
+  variant, // 'elevated' | 'flat' | 'bordered'
   ...props
 }) => {
+  const variantClass = variant === 'elevated' ? 'card-elevated' : variant === 'flat' ? 'card-flat' : variant === 'bordered' ? 'card-bordered' : '';
   return (
     <div
       className={`
@@ -17,6 +19,7 @@ const Card = ({
         ${hoverable ? '' : '!transform-none !shadow-lg'}
         ${noPadding ? 'p-0' : ''}
         ${loading ? 'shimmer-effect' : ''}
+        ${variantClass}
         ${className}
       `}
       {...props}

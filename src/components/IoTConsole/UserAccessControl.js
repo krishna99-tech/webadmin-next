@@ -17,9 +17,9 @@ export default function UserAccessControl({ users, onAction, onAddRequest, onEdi
                 </Button>
             </div>
 
-            <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md overflow-hidden rounded-2xl">
+            <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md overflow-hidden rounded-2xl card-hover-glow table-wrapper">
                 <div className="overflow-x-auto">
-                    <table className="iot-table">
+                    <table className="iot-table table-hover">
                         <thead>
                             <tr>
                                 <th>Identity</th>
@@ -32,7 +32,7 @@ export default function UserAccessControl({ users, onAction, onAddRequest, onEdi
                         </thead>
                         <tbody>
                             {users.map(user => (
-                                <tr key={user.id}>
+                                <tr key={user.id || user._id}>
                                     <td>
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs uppercase">

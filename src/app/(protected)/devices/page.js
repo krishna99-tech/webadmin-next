@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useIoT } from '@/context/IoTContext';
 import { useToast } from '@/context/ToastContext';
 import DeviceManager from '@/components/IoTConsole/DeviceManager';
 import Modals from '@/components/IoTConsole/Modals';
 import Button from '@/components/UI/Button';
+import ConfirmModal from '@/components/UI/ConfirmModal';
+import EmptyState from '@/components/UI/EmptyState';
 import adminService from '@/services/adminService';
 import {
     Smartphone,
@@ -13,6 +15,9 @@ import {
     RefreshCw,
     Plus,
     X,
+    Search,
+    ArrowUpDown,
+    Server,
 } from 'lucide-react';
 
 export default function DevicesPage() {
@@ -39,6 +44,11 @@ export default function DevicesPage() {
     const [transferDevice, setTransferDevice] = useState(null);
     const [transferUserId, setTransferUserId] = useState('');
     const [transferLoading, setTransferLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState('name'); // name | status | last_active
+    const [sortOrder, setSortOrder] = useState('asc');
+    const [confirmDelete, setConfirmDelete] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     useEffect(() => {
         fetchDevices();
@@ -135,11 +145,41 @@ export default function DevicesPage() {
         }
     };
 
-    const displayDevices = devices.filter(d => {
-        if (activeFleetTab === 'active') return d.status === 'online';
-        if (activeFleetTab === 'orphaned') return !d.user_id || d.owner_name?.includes('Orphaned');
-        return true;
-    });
+    const displayDevices = useMemo(() => {
+        let list = devices.filter(d => {
+            if (activeFleetTab === 'active') return d.status === 'online';
+            if (activeFleetTab === 'orphaned') return !d.user_id || d.owner_name?.includes('Orphaned');
+            return true;
+        });
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            list = list.filter(d =>
+                (d.name || '').toLowerCase().includes(q) ||
+                (d.type || '').toLowerCase().includes(q) ||
+                (d.location || '').toLowerCase().includes(q)
+            );
+        }
+        const statusOrder = { online: 0, warning: 1, offline: 2 };
+        list = [...list].sort((a, b) => {
+            if (sortBy === 'name') {
+                const na = (a.name || '').toLowerCase();
+                const nb = (b.name || '').toLowerCase();
+                return sortOrder === 'asc' ? na.localeCompare(nb) : nb.localeCompare(na);
+            }
+            if (sortBy === 'status') {
+                const sa = statusOrder[a.status] ?? 3;
+                const sb = statusOrder[b.status] ?? 3;
+                return sortOrder === 'asc' ? sa - sb : sb - sa;
+            }
+            if (sortBy === 'last_active') {
+                const ta = new Date(a.last_active || 0).getTime();
+                const tb = new Date(b.last_active || 0).getTime();
+                return sortOrder === 'asc' ? ta - tb : tb - ta;
+            }
+            return 0;
+        });
+        return list;
+    }, [devices, activeFleetTab, searchQuery, sortBy, sortOrder]);
 
     return (
         <div className="devices-page animate-fadeInUp">
@@ -169,8 +209,42 @@ export default function DevicesPage() {
                 </div>
             </div>
 
+            {/* Search & Sort */}
+            <div className="action-bar mb-6 flex flex-wrap items-center gap-4">
+                <div className="flex-1 min-w-[200px] max-w-md relative">
+                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
+                    <input
+                        type="text"
+                        placeholder="Search by name, type, location…"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="input-field input-glow w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-white/5 bg-white/5 focus:border-blue-500/50"
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-dim">Sort</span>
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="input-field py-2.5 pl-3 pr-8 text-sm rounded-xl border border-white/5 bg-white/5 focus:border-blue-500/50"
+                    >
+                        <option value="name">Name</option>
+                        <option value="status">Status</option>
+                        <option value="last_active">Last Active</option>
+                    </select>
+                    <button
+                        type="button"
+                        onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+                        className="p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors btn-press"
+                        title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                    >
+                        <ArrowUpDown size={18} className="text-dim" />
+                    </button>
+                </div>
+            </div>
+
             {users.length > 0 && (
-                <div className="flex gap-2 mb-8 p-1.5 bg-white/5 rounded-2xl w-fit border border-white/5">
+                <div className="flex gap-2 mb-6 p-1.5 bg-white/5 rounded-2xl w-fit border border-white/5">
                     {[
                         { id: 'total', label: 'All', count: devices.length },
                         { id: 'active', label: 'Online', count: devices.filter(d => d.status === 'online').length },
@@ -196,15 +270,38 @@ export default function DevicesPage() {
                         <RefreshCw className="w-8 h-8 text-primary animate-spin" />
                     </div>
                 )}
-                <DeviceManager
-                    devices={displayDevices}
-                    onAction={handleAction}
-                    onAddRequest={() => { setSelectedDevice(null); setShowModal(true); }}
-                    onEditRequest={(d) => { setSelectedDevice(d); setShowModal(true); }}
-                    onTransferRequest={(d) => { setTransferDevice(d); setShowTransferModal(true); }}
-                    showTransferButton={users.length > 0}
-                />
+                {displayDevices.length === 0 ? (
+                    <EmptyState
+                        icon={Server}
+                        title={searchQuery ? 'No devices match your search' : 'No devices yet'}
+                        description={searchQuery ? 'Try a different search or clear filters.' : 'Register your first device to get started.'}
+                        actionLabel={searchQuery ? undefined : 'Add Device'}
+                        onAction={searchQuery ? undefined : () => { setSelectedDevice(null); setShowModal(true); }}
+                        className="rounded-2xl"
+                    />
+                ) : (
+                    <DeviceManager
+                        devices={displayDevices}
+                        onAction={handleAction}
+                        onAddRequest={() => { setSelectedDevice(null); setShowModal(true); }}
+                        onEditRequest={(d) => { setSelectedDevice(d); setShowModal(true); }}
+                        onTransferRequest={(d) => { setTransferDevice(d); setShowTransferModal(true); }}
+                        showTransferButton={users.length > 0}
+                    />
+                )}
             </div>
+
+            <ConfirmModal
+                open={!!confirmDelete}
+                title="Remove device"
+                message={confirmDelete ? `Remove "${confirmDelete.name}" from the fleet permanently? This cannot be undone.` : ''}
+                variant="danger"
+                confirmLabel="Remove"
+                cancelLabel="Cancel"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setConfirmDelete(null)}
+                loading={deleteLoading}
+            />
 
             <Modals
                 showDeviceModal={showModal}
