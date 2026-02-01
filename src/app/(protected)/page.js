@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import Link from 'next/link';
 import { AuthContext } from '@/context/AuthContext';
+import useWebSocket from '@/hooks/useWebSocket';
 import Card from '@/components/UI/Card';
 import deviceService from '@/services/deviceService';
 import adminService from '@/services/adminService';
@@ -66,7 +67,9 @@ export default function Dashboard() {
     const [analytics, setAnalytics] = useState(null);
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { user: currentUser } = useContext(AuthContext);
+    const { currentUser } = useContext(AuthContext);
+    const { isConnected: wsConnected } = useWebSocket();
+    const isAdmin = currentUser?.is_admin ?? currentUser?.role === 'Admin';
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -74,9 +77,9 @@ export default function Dashboard() {
 
             try {
                 const [devices, activityLogs, analyticsData] = await Promise.all([
-                    currentUser.is_admin ? adminService.getAllDevices() : deviceService.getDevices(),
-                    adminService.getActivity(),
-                    currentUser.is_admin ? adminService.getAnalytics() : null
+                    isAdmin ? adminService.getAllDevices() : deviceService.getDevices(),
+                    adminService.getActivity().catch(() => []),
+                    isAdmin ? adminService.getAnalytics() : null
                 ]);
 
                 const online = devices.filter(d => d.status === 'online').length;
@@ -110,15 +113,21 @@ export default function Dashboard() {
                         Real-time analytics and platform health metrics
                     </p>
                 </div>
-                {currentUser?.is_admin && (
-                    <div className="flex gap-3">
+                {isAdmin && (
+                    <div className="flex gap-3 items-center flex-wrap">
                         <span className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-full text-xs font-bold border border-green-500/20">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse border border-white" />
                             API OPERATIONAL
                         </span>
                         <span className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">
-                            v1.2.4-BETA
+                            v1.2.4
                         </span>
+                        {wsConnected && (
+                            <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/20">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                Real-time
+                            </span>
+                        )}
                     </div>
                 )}
             </div>
@@ -150,7 +159,7 @@ export default function Dashboard() {
                     loading={loading}
                 />
 
-                {currentUser?.is_admin && (
+                {isAdmin && (
                     <StatCard
                         title="User Base"
                         value={loading ? '—' : stats.totalUsers}
@@ -162,7 +171,7 @@ export default function Dashboard() {
             </div>
 
             {/* CHARTS ROW */}
-            {currentUser?.is_admin && analytics && (
+            {isAdmin && analytics && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <Card className="!bg-black/40 !backdrop-blur-xl border-white/5">
                         <div className="flex justify-between items-center mb-6">
@@ -254,6 +263,42 @@ export default function Dashboard() {
                         </div>
                     </Card>
                 </div>
+            )}
+
+            {/* System Health (Admin) */}
+            {isAdmin && (
+                <Card className="mb-8 border-white/5 bg-gradient-to-r from-slate-800/50 to-slate-900/50">
+                    <h3 className="card-title mb-4 flex items-center gap-2">
+                        <Shield size={16} className="text-blue-400" />
+                        System Health
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="admin-health-item p-4 rounded-xl bg-white/5 border border-white/5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-dim">API Gateway</span>
+                            <span className="block text-lg font-bold text-green-400 mt-1">Operational</span>
+                        </div>
+                        <div className="admin-health-item p-4 rounded-xl bg-white/5 border border-white/5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-dim">WebSocket</span>
+                            <span className={`block text-lg font-bold mt-1 ${wsConnected ? 'text-green-400' : 'text-amber-400'}`}>
+                                {wsConnected ? 'Connected' : 'Offline'}
+                            </span>
+                        </div>
+                        <div className="admin-health-item p-4 rounded-xl bg-white/5 border border-white/5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-dim">Uptime</span>
+                            <span className="block text-lg font-bold text-white mt-1">
+                                {stats.totalDevices > 0
+                                    ? `${Math.round((stats.onlineDevices / stats.totalDevices) * 100)}%`
+                                    : '—'}
+                            </span>
+                        </div>
+                        <div className="admin-health-item p-4 rounded-xl bg-white/5 border border-white/5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-dim">Alerts</span>
+                            <span className="block text-lg font-bold text-white mt-1">
+                                {stats.offlineDevices > 0 ? stats.offlineDevices : 'None'}
+                            </span>
+                        </div>
+                    </div>
+                </Card>
             )}
 
             {/* LOWER GRID */}

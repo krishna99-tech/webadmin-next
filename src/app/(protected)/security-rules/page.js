@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '@/components/UI/Card';
 import Button from '@/components/UI/Button';
+import { useToast } from '@/context/ToastContext';
 import adminService from '@/services/adminService';
 import {
     Shield,
@@ -19,6 +20,7 @@ import {
    SECURITY RULES PAGE
 ================================ */
 export default function SecurityRulesPage() {
+    const toast = useToast();
     const [rules, setRules] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -64,10 +66,14 @@ export default function SecurityRulesPage() {
 
             await adminService.updateSecurityRules(parsedRules);
             setSuccess(true);
+            setError(null);
+            toast.success('Security rules deployed');
             setTimeout(() => setSuccess(false), 3000);
         } catch (err) {
             console.error('Failed to update rules', err);
-            setError(err.message || 'Failed to update security rules.');
+            const msg = err.message || 'Failed to update security rules.';
+            setError(msg);
+            toast.error(msg);
         } finally {
             setSaving(false);
         }
@@ -82,14 +88,14 @@ export default function SecurityRulesPage() {
     return (
         <div className="security-rules-page animate-fadeInUp">
             {/* Header */}
-            <div className="dashboard-header">
+            <div className="page-header mb-8">
                 <div>
-                    <h2 className="dashboard-title">
-                        <Lock className="icon-glow mr-2" size={24} />
-                        Identity Guard
+                    <h2 className="page-title flex items-center gap-3">
+                        <Shield className="icon-glow text-primary" size={28} />
+                        Security Rules
                     </h2>
-                    <p className="dashboard-subtitle">
-                        Manage granular platform access control using JSON security definitions
+                    <p className="dashboard-subtitle mt-1">
+                        Manage platform access control using JSON security definitions
                     </p>
                 </div>
                 <div className="flex gap-3">

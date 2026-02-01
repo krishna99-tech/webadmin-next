@@ -21,6 +21,7 @@ import {
   Cpu
 } from 'lucide-react';
 import { AuthContext } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import useWebSocket from '@/hooks/useWebSocket';
 
 export default function Settings() {
@@ -29,6 +30,7 @@ export default function Settings() {
   const [theme, setTheme] = useState('onyx');
   const [density, setDensity] = useState('comfortable');
   const { currentUser } = useContext(AuthContext);
+  const toast = useToast();
   const { connected, latency } = useWebSocket();
 
   // Handle theme change locally (mock)
@@ -40,7 +42,7 @@ export default function Settings() {
     setSaving(true);
     await new Promise((r) => setTimeout(r, 1200));
     setSaving(false);
-    alert('Administrative preferences synchronized across clusters.');
+    toast.success('Settings synchronized');
   };
 
   const tabs = [

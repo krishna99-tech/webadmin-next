@@ -3,6 +3,7 @@
 import { useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthContext } from '@/context/AuthContext';
+import { IoTProvider } from '@/context/IoTContext';
 import MainLayout from '@/components/Layout/MainLayout';
 
 export default function ProtectedLayout({ children }) {
@@ -15,18 +16,24 @@ export default function ProtectedLayout({ children }) {
         }
     }, [currentUser, loading, router]);
 
-    // Optional: Render loading state while checking auth
     if (loading) {
         return (
-            <div className="loading-container">
-                Loading...
+            <div className="loading-container flex min-h-screen items-center justify-center bg-[var(--bg-dark)]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                    <p className="text-dim text-sm">Loading IoT Console...</p>
+                </div>
             </div>
         );
     }
 
-    // Determine if we should render children (if logged in)
-    // If not logged in, the useEffect will redirect, but we return null to avoid flash
     if (!currentUser) return null;
 
-    return <MainLayout>{children}</MainLayout>;
+    const isAdmin = currentUser?.is_admin ?? currentUser?.role === 'Admin';
+
+    return (
+        <IoTProvider isAdmin={isAdmin}>
+            <MainLayout>{children}</MainLayout>
+        </IoTProvider>
+    );
 }

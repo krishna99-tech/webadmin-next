@@ -10,7 +10,8 @@ import config from '@/config';
  * Provides real-time updates for devices, notifications, and telemetry
  */
 export default function useWebSocket() {
-    const { token } = useContext(AuthContext);
+    const auth = useContext(AuthContext);
+    const wsToken = auth?.token ?? (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
     const wsRef = useRef(null);
     const reconnectTimeoutRef = useRef(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -21,8 +22,8 @@ export default function useWebSocket() {
     const getWebSocketUrl = useCallback(() => {
         const wsProtocol = config.API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
         const baseUrl = config.API_BASE_URL.replace(/^https?:\/\//, '');
-        return `${wsProtocol}://${baseUrl}/ws?token=${token}`;
-    }, [token]);
+        return `${wsProtocol}://${baseUrl}/ws?token=${wsToken}`;
+    }, [wsToken]);
 
     // Subscribe to specific event types
     const subscribe = useCallback((eventType, callback) => {
@@ -52,7 +53,7 @@ export default function useWebSocket() {
 
     // Connect to WebSocket
     const connect = useCallback(() => {
-        if (!token) return;
+        if (!wsToken) return;
 
         try {
             const wsUrl = getWebSocketUrl();
@@ -118,7 +119,7 @@ export default function useWebSocket() {
         } catch (error) {
             console.error('Failed to create WebSocket connection:', error);
         }
-    }, [token, getWebSocketUrl]);
+    }, [wsToken, getWebSocketUrl]);
 
     // Disconnect from WebSocket
     const disconnect = useCallback(() => {
@@ -133,17 +134,18 @@ export default function useWebSocket() {
 
     // Connect on mount, disconnect on unmount
     useEffect(() => {
-        if (token) {
+        if (wsToken) {
             connect();
         }
 
         return () => {
             disconnect();
         };
-    }, [token, connect, disconnect]);
+    }, [wsToken, connect, disconnect]);
 
     return {
         isConnected,
+        connected: isConnected,
         lastMessage,
         subscribe,
         send,

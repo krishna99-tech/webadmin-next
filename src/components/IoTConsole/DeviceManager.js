@@ -1,9 +1,9 @@
 import React from 'react';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
-import { Plus, Power, Edit, Trash2, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
+import { Plus, Power, Edit, Trash2, Wifi, WifiOff, AlertTriangle, RefreshCw } from 'lucide-react';
 
-export default function DeviceManager({ devices, onAction, onAddRequest, onEditRequest }) {
+export default function DeviceManager({ devices, onAction, onAddRequest, onEditRequest, onTransferRequest, showTransferButton = false }) {
     const getStatusBadge = (status) => {
         const classes = {
             online: 'status-badge-online',
@@ -84,16 +84,25 @@ export default function DeviceManager({ devices, onAction, onAddRequest, onEditR
                                             >
                                                 <Power size={16} />
                                             </button>
+                                            {showTransferButton && onTransferRequest && (
+                                                <button 
+                                                    onClick={() => onTransferRequest(device)} 
+                                                    title="Transfer Ownership"
+                                                    className="p-2 hover:bg-purple-500/10 rounded-lg text-purple-400 transition-colors"
+                                                >
+                                                    <RefreshCw size={16} />
+                                                </button>
+                                            )}
                                             <button 
                                                 onClick={() => onEditRequest(device)} 
-                                                title="Edit Config"
+                                                title="Edit"
                                                 className="p-2 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors"
                                             >
                                                 <Edit size={16} />
                                             </button>
                                             <button 
                                                 onClick={() => onAction(device, 'delete')} 
-                                                title="Decommission"
+                                                title="Remove"
                                                 className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
                                             >
                                                 <Trash2 size={16} />

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Card from '@/components/UI/Card';
 import Input from '@/components/UI/Input';
 import Button from '@/components/UI/Button';
+import { useToast } from '@/context/ToastContext';
 import adminService from '@/services/adminService';
 import { Mail, Send, Users, CheckCircle, AlertCircle, Clock, Tag } from 'lucide-react';
 
@@ -13,6 +14,7 @@ import { Mail, Send, Users, CheckCircle, AlertCircle, Clock, Tag } from 'lucide-
 ================================ */
 function BroadcastPageContent() {
     const searchParams = useSearchParams();
+    const toast = useToast();
     const [subject, setSubject] = useState('');
     const [message, setMessage] = useState('');
     const [recipients, setRecipients] = useState('');
@@ -48,12 +50,12 @@ function BroadcastPageContent() {
         e.preventDefault();
 
         if (!subject.trim() || !message.trim()) {
-            setStatus({ type: 'error', message: 'Subject and message are required' });
+            toast.warning('Subject and message are required');
             return;
         }
 
         if (!sendToAll && !recipients.trim()) {
-            setStatus({ type: 'error', message: 'Please enter recipient emails or select "Send to All"' });
+            toast.warning('Enter recipient emails or select Send to All');
             return;
         }
 
@@ -61,26 +63,20 @@ function BroadcastPageContent() {
         setStatus(null);
 
         try {
-            const recipientList = sendToAll ? null : recipients.split(',').map(e => e.trim()).filter(e => e);
+            const recipientList = sendToAll ? null : recipients.split(',').map(e => e.trim()).filter(Boolean);
             const result = await adminService.sendBroadcast(subject, message, recipientList);
 
-            setStatus({
-                type: 'success',
-                message: result.message || 'Broadcast message dispatched!'
-            });
+            toast.success(result.message || 'Broadcast sent successfully');
+            setStatus({ type: 'success', message: result.message || 'Message dispatched' });
 
-            // Reset form
             setSubject('');
             setMessage('');
             setRecipients('');
-
-            // Refresh history
             fetchHistory();
         } catch (error) {
-            setStatus({
-                type: 'error',
-                message: error.response?.data?.detail || 'Failed to dispatch broadcast'
-            });
+            const errMsg = error.response?.data?.detail || 'Failed to dispatch broadcast';
+            toast.error(errMsg);
+            setStatus({ type: 'error', message: errMsg });
         } finally {
             setLoading(false);
         }

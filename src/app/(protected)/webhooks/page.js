@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/UI/Card';
 import Input from '@/components/UI/Input';
 import Button from '@/components/UI/Button';
+import { useToast } from '@/context/ToastContext';
 import webhookService from '@/services/webhookService';
 import {
     Webhook as WebhookIcon,
@@ -22,6 +23,7 @@ import {
    WEBHOOKS PAGE
 ================================ */
 export default function WebhooksPage() {
+    const toast = useToast();
     const [webhooks, setWebhooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -60,14 +62,14 @@ export default function WebhooksPage() {
                 await webhookService.createWebhook(formData);
             }
 
-            // Reset form and refresh list
             setFormData({ url: '', events: ['all'], secret: '', active: true });
             setShowForm(false);
             setEditingId(null);
             fetchWebhooks();
+            toast.success(editingId ? 'Webhook updated' : 'Webhook created');
         } catch (error) {
             console.error('Failed to save webhook', error);
-            alert('Failed to save webhook: ' + (error.response?.data?.detail || error.message));
+            toast.error(error.response?.data?.detail || error.message || 'Failed to save webhook');
         }
     };
 
@@ -88,9 +90,10 @@ export default function WebhooksPage() {
         try {
             await webhookService.deleteWebhook(id);
             fetchWebhooks();
+            toast.success('Webhook removed');
         } catch (error) {
             console.error('Failed to delete webhook', error);
-            alert('Failed to delete webhook');
+            toast.error('Failed to delete webhook');
         }
     };
 
@@ -103,13 +106,13 @@ export default function WebhooksPage() {
     return (
         <div className="webhooks-page animate-fadeInUp">
             {/* Header */}
-            <div className="dashboard-header">
+            <div className="page-header mb-8">
                 <div>
-                    <h2 className="dashboard-title">
-                        <WebhookIcon className="icon-glow mr-2" size={24} />
+                    <h2 className="page-title flex items-center gap-3">
+                        <WebhookIcon className="icon-glow text-primary" size={28} />
                         Webhook Management
                     </h2>
-                    <p className="dashboard-subtitle">
+                    <p className="dashboard-subtitle mt-1">
                         Configure HTTP callbacks to receive real-time event notifications
                     </p>
                 </div>

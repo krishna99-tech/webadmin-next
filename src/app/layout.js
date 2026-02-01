@@ -1,9 +1,10 @@
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { ToastProvider } from '@/context/ToastContext';
 
 export const metadata = {
-  title: 'ThingsNXT Admin',
-  description: 'Web Administration Portal for ThingsNXT Platform',
+  title: 'ThingsNXT IoT Admin Console',
+  description: 'ThingsNXT IoT Admin Console - Device management, users, analytics & system control',
 };
 
 export default function RootLayout({ children }) {
@@ -11,7 +12,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body suppressHydrationWarning={true}>
         <AuthProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

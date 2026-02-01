@@ -1,41 +1,44 @@
 'use client';
 
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(undefined);
+    const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const syncAuthState = useCallback(() => {
+        if (typeof window === 'undefined') return;
         const user = authService.getCurrentUser();
-        if (user) {
-            setCurrentUser(user);
-        }
-        setLoading(false);
+        const accessToken = localStorage.getItem('access_token');
+        setCurrentUser(user || null);
+        setToken(accessToken || null);
     }, []);
 
+    useEffect(() => {
+        syncAuthState();
+        setLoading(false);
+    }, [syncAuthState]);
+
     const login = async (username, password) => {
-        try {
-            const data = await authService.login(username, password);
-            setCurrentUser(data.user);
-            return data;
-        } catch (error) {
-            throw error;
-        }
+        const data = await authService.login(username, password);
+        setCurrentUser(data.user);
+        setToken(data.access_token);
+        return data;
     };
 
     const logout = async () => {
         await authService.logout();
         setCurrentUser(null);
+        setToken(null);
     };
 
     return (
-        <AuthContext.Provider value={{ currentUser, login, logout, loading }}>
-            {children} {/* Render children even if loading to prevent flash? No, keep existing logic but maybe adapt for SSR */}
-            {/* Actually, for blocking initial load, traditional logic is fine for now but Next.js usually renders skeleton */}
+        <AuthContext.Provider value={{ currentUser, token, login, logout, loading, syncAuthState }}>
+            {children}
         </AuthContext.Provider>
     );
 };

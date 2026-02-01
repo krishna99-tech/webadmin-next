@@ -15,7 +15,7 @@ const MainLayout = ({ children }) => {
         <TopBar />
 
         <main className="app-main">
-          <div className="app-container animate-fadeInUp">
+          <div className="app-container admin-page animate-fadeInUp">
             {children}
           </div>
         </main>
