@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Bell, Search, Info, AlertTriangle, Plus, Server, Users, Wifi, WifiOff, ChevronDown } from 'lucide-react';
@@ -28,6 +28,7 @@ const TopBar = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [apiStatus, setApiStatus] = useState('checking');
+  const searchInputRef = useRef(null);
 
   const { isConnected: wsConnected } = useWebSocket();
 
@@ -74,6 +75,10 @@ const TopBar = () => {
       if (e.key === 'Escape') {
         setShowNotifications(false);
         setShowQuickActions(false);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -178,13 +183,14 @@ const TopBar = () => {
           </div>
         )}
 
-        {/* Search */}
+        {/* Search (Ctrl+K / Cmd+K to focus) */}
         <div className="topbar-search">
           <Search size={16} className="opacity-40" />
           <input
+            ref={searchInputRef}
             type="text"
-            placeholder="Search..."
-            className="text-xs bg-transparent border-none outline-none w-32 lg:w-40"
+            placeholder="Search… (Ctrl+K)"
+            className="text-xs bg-transparent border-none outline-none w-32 lg:w-44 focus-ring rounded"
             aria-label="Search"
           />
         </div>
