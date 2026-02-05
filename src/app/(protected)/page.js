@@ -148,7 +148,7 @@ export default function Dashboard() {
                         <button
                             type="button"
                             onClick={() => setAutoRefresh(!autoRefresh)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all btn-press ${autoRefresh ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-white/5 text-dim border-white/10 hover:border-white/20'}`}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all btn-press ${autoRefresh ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-content2/5 text-dim border-divider/10 hover:border-divider/20'}`}
                         >
                             {autoRefresh ? 'Auto 1m ✓' : 'Auto-refresh'}
                         </button>
@@ -156,7 +156,7 @@ export default function Dashboard() {
                     {isAdmin && (
                         <div className="flex gap-2 items-center flex-wrap">
                             <span className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-full text-xs font-bold border border-green-500/20">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse border border-white" />
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse border border-divider" />
                                 API
                             </span>
                             <span className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">
@@ -217,7 +217,7 @@ export default function Dashboard() {
             {/* CHARTS ROW */}
             {isAdmin && analytics && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <Card className="!bg-black/40 !backdrop-blur-xl border-white/5">
+                    <Card className="!bg-black/40 !backdrop-blur-xl border-divider/5">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="card-title text-sm flex items-center gap-2">
                                 <TrendingUp size={16} className="text-blue-400" />
@@ -265,7 +265,7 @@ export default function Dashboard() {
                         </div>
                     </Card>
 
-                    <Card className="!bg-black/40 !backdrop-blur-xl border-white/5">
+                    <Card className="!bg-black/40 !backdrop-blur-xl border-divider/5">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="card-title text-sm flex items-center gap-2">
                                 <Users size={16} className="text-purple-400" />
@@ -311,33 +311,33 @@ export default function Dashboard() {
 
             {/* System Health (Admin) */}
             {isAdmin && (
-                <Card className="mb-8 border-white/5 bg-gradient-to-r from-slate-800/50 to-slate-900/50">
+                <Card className="mb-8 border-divider/5 bg-gradient-to-r from-slate-800/50 to-slate-900/50">
                     <h3 className="card-title mb-4 flex items-center gap-2">
                         <Shield size={16} className="text-blue-400" />
                         System Health
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="admin-health-item p-4 rounded-xl bg-white/5 border border-white/5">
+                        <div className="admin-health-item p-4 rounded-xl bg-content2/5 border border-divider/5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-dim">API Gateway</span>
                             <span className="block text-lg font-bold text-green-400 mt-1">Operational</span>
                         </div>
-                        <div className="admin-health-item p-4 rounded-xl bg-white/5 border border-white/5">
+                        <div className="admin-health-item p-4 rounded-xl bg-content2/5 border border-divider/5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-dim">WebSocket</span>
                             <span className={`block text-lg font-bold mt-1 ${wsConnected ? 'text-green-400' : 'text-amber-400'}`}>
                                 {wsConnected ? 'Connected' : 'Offline'}
                             </span>
                         </div>
-                        <div className="admin-health-item p-4 rounded-xl bg-white/5 border border-white/5">
+                        <div className="admin-health-item p-4 rounded-xl bg-content2/5 border border-divider/5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-dim">Uptime</span>
-                            <span className="block text-lg font-bold text-white mt-1">
+                            <span className="block text-lg font-bold text-foreground mt-1">
                                 {stats.totalDevices > 0
                                     ? `${Math.round((stats.onlineDevices / stats.totalDevices) * 100)}%`
                                     : '—'}
                             </span>
                         </div>
-                        <div className="admin-health-item p-4 rounded-xl bg-white/5 border border-white/5">
+                        <div className="admin-health-item p-4 rounded-xl bg-content2/5 border border-divider/5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-dim">Alerts</span>
-                            <span className="block text-lg font-bold text-white mt-1">
+                            <span className="block text-lg font-bold text-foreground mt-1">
                                 {stats.offlineDevices > 0 ? stats.offlineDevices : 'None'}
                             </span>
                         </div>
@@ -348,7 +348,7 @@ export default function Dashboard() {
             {/* LOWER GRID */}
             <div className="dashboard-lower-grid">
                 {/* Quick Actions */}
-                <Card className="border-white/5 card-hover-glow">
+                <Card className="border-divider/5 card-hover-glow">
                     <h3 className="card-title mb-6 flex items-center gap-2">
                         <Plus size={16} className="text-dim" />
                         Quick Command Hub
@@ -390,7 +390,7 @@ export default function Dashboard() {
                 </Card>
 
                 {/* Recent Activity */}
-                <Card className="border-white/5 card-hover-glow">
+                <Card className="border-divider/5 card-hover-glow">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="card-title flex items-center gap-2">
                             <Activity size={16} className="text-green-400" />
@@ -406,14 +406,14 @@ export default function Dashboard() {
                             </div>
                         ) : (
                             activities.map((log, i) => (
-                                <div key={log.id || i} className="activity-item !bg-white/5 !border-white/5 hover:!bg-white/10 transition-colors rounded-xl p-3 border border-transparent">
+                                <div key={log.id || i} className="activity-item !bg-content2/5 !border-divider/5 hover:!bg-content2/10 transition-colors rounded-xl p-3 border border-transparent">
                                     <div className="activity-icon">
                                         <Clock size={12} className="text-blue-400" />
                                     </div>
 
                                     <div className="activity-content">
                                         <div className="flex justify-between items-start">
-                                            <p className="activity-text font-bold text-white capitalize">{log.action.replace(/_/g, ' ')}</p>
+                                            <p className="activity-text font-bold text-foreground capitalize">{log.action.replace(/_/g, ' ')}</p>
                                             <span className="text-[9px] text-gray-500 font-mono">
                                                 {new Date(log.timestamp).toLocaleTimeString([], {
                                                     hour: '2-digit',

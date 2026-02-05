@@ -13,7 +13,7 @@ export default function Overview({ devices, users, sensorData, deviceStats }) {
                 <Card className="iot-stat-card border-blue-500/20 bg-blue-500/5">
                     <div>
                         <p className="text-dim text-[10px] uppercase font-bold tracking-widest">Total Devices</p>
-                        <p className="text-3xl font-bold text-white mt-1">{devices.length}</p>
+                        <p className="text-3xl font-bold text-foreground mt-1">{devices.length}</p>
                     </div>
                     <div className="p-3 rounded-xl bg-blue-500/10">
                         <Settings className="w-8 h-8 text-blue-400 icon-glow" />
@@ -31,7 +31,7 @@ export default function Overview({ devices, users, sensorData, deviceStats }) {
                 <Card className="iot-stat-card border-purple-500/20 bg-purple-500/5">
                     <div>
                         <p className="text-dim text-[10px] uppercase font-bold tracking-widest">Total Users</p>
-                        <p className="text-3xl font-bold text-white mt-1">{users.length}</p>
+                        <p className="text-3xl font-bold text-foreground mt-1">{users.length}</p>
                     </div>
                     <div className="p-3 rounded-xl bg-purple-500/10">
                         <Users className="w-8 h-8 text-purple-400 icon-glow" />
@@ -50,8 +50,8 @@ export default function Overview({ devices, users, sensorData, deviceStats }) {
 
             {/* Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md p-6">
-                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <Card className="border-divider/5 bg-content2/[0.02] backdrop-blur-md p-6">
+                    <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
                         <ChartIcon size={18} className="text-blue-400" />
                         Real-time Sensor Data
                     </h3>
@@ -73,8 +73,8 @@ export default function Overview({ devices, users, sensorData, deviceStats }) {
                     </div>
                 </Card>
 
-                <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md p-6">
-                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <Card className="border-divider/5 bg-content2/[0.02] backdrop-blur-md p-6">
+                    <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
                         <Users size={18} className="text-purple-400" />
                         Device Status Distribution
                     </h3>
@@ -105,8 +105,8 @@ export default function Overview({ devices, users, sensorData, deviceStats }) {
             </div>
 
             {/* Recent Alerts */}
-            <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Critical System Alerts</h3>
+            <Card className="border-divider/5 bg-content2/[0.02] backdrop-blur-md p-6">
+                <h3 className="text-lg font-bold text-foreground mb-4">Critical System Alerts</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {devices.filter(d => d.status === 'warning' || d.battery < 20).map(device => (
                         <div key={device.id} className="flex items-center justify-between p-4 bg-yellow-500/5 rounded-2xl border border-yellow-500/10 hover:bg-yellow-500/10 transition-all hover:scale-[1.02]">
@@ -115,13 +115,13 @@ export default function Overview({ devices, users, sensorData, deviceStats }) {
                                     <AlertTriangle className="w-5 h-5 text-yellow-500" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-white">{device.name}</p>
+                                    <p className="font-bold text-foreground">{device.name}</p>
                                     <p className="text-[11px] text-dim font-medium">
                                         {device.battery < 20 ? `Critical Battery: ${device.battery}%` : 'Connection Latency Detected'}
                                     </p>
                                 </div>
                             </div>
-                            <span className="text-[10px] text-dim font-mono bg-white/5 px-2 py-1 rounded-md">{device.last_active ? new Date(device.last_active).toLocaleTimeString() : 'Never'}</span>
+                            <span className="text-[10px] text-dim font-mono bg-content2/5 px-2 py-1 rounded-md">{device.last_active ? new Date(device.last_active).toLocaleTimeString() : 'Never'}</span>
                         </div>
                     ))}
                 </div>

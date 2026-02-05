@@ -176,7 +176,7 @@ export default function UsersPage() {
                         placeholder="Search by username, email, name…"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="input-field input-glow w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-white/5 bg-white/5 focus:border-blue-500/50"
+                        className="input-field input-glow w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-divider/5 bg-content2/5 focus:border-blue-500/50"
                     />
                 </div>
             </div>

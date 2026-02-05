@@ -248,7 +248,7 @@ export default function DevicesPage() {
                         placeholder="Search by name, type, location…"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="input-field input-glow w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-white/5 bg-white/5 focus:border-blue-500/50"
+                        className="input-field input-glow w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-divider/5 bg-content2/5 focus:border-blue-500/50"
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -256,7 +256,7 @@ export default function DevicesPage() {
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="input-field py-2.5 pl-3 pr-8 text-sm rounded-xl border border-white/5 bg-white/5 focus:border-blue-500/50"
+                        className="input-field py-2.5 pl-3 pr-8 text-sm rounded-xl border border-divider/5 bg-content2/5 focus:border-blue-500/50"
                     >
                         <option value="name">Name</option>
                         <option value="status">Status</option>
@@ -265,7 +265,7 @@ export default function DevicesPage() {
                     <button
                         type="button"
                         onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
-                        className="p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors btn-press"
+                        className="p-2.5 rounded-xl border border-divider/5 bg-content2/5 hover:bg-content2/10 transition-colors btn-press"
                         title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                     >
                         <ArrowUpDown size={18} className="text-dim" />
@@ -274,7 +274,7 @@ export default function DevicesPage() {
             </div>
 
             {users.length > 0 && (
-                <div className="flex gap-2 mb-6 p-1.5 bg-white/5 rounded-2xl w-fit border border-white/5">
+                <div className="flex gap-2 mb-6 p-1.5 bg-content2/5 rounded-2xl w-fit border border-divider/5">
                     {[
                         { id: 'total', label: 'All', count: devices.length },
                         { id: 'active', label: 'Online', count: devices.filter(d => d.status === 'online').length },
@@ -283,10 +283,10 @@ export default function DevicesPage() {
                         <button
                             key={tab.id}
                             onClick={() => setActiveFleetTab(tab.id)}
-                            className={`px-6 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${activeFleetTab === tab.id ? 'bg-blue-500 text-white shadow-primary' : 'hover:bg-white/5 text-dim'}`}
+                            className={`px-6 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${activeFleetTab === tab.id ? 'bg-blue-500 text-foreground shadow-primary' : 'hover:bg-content2/5 text-dim'}`}
                         >
                             {tab.label}
-                            <span className={`px-2 py-0.5 rounded-lg text-[10px] ${activeFleetTab === tab.id ? 'bg-white/20' : 'bg-white/10'}`}>
+                            <span className={`px-2 py-0.5 rounded-lg text-[10px] ${activeFleetTab === tab.id ? 'bg-content2/20' : 'bg-content2/10'}`}>
                                 {tab.count}
                             </span>
                         </button>
@@ -348,14 +348,14 @@ export default function DevicesPage() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn p-4">
                     <div className="card w-full max-w-sm p-6 border-purple-500/30">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-white">Transfer Ownership</h3>
-                            <button onClick={() => setShowTransferModal(false)} className="text-dim hover:text-white">
+                            <h3 className="text-xl font-bold text-foreground">Transfer Ownership</h3>
+                            <button onClick={() => setShowTransferModal(false)} className="text-dim hover:text-foreground">
                                 <X size={20} />
                             </button>
                         </div>
-                        <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/5">
+                        <div className="mb-6 p-4 bg-content2/5 rounded-xl border border-divider/5">
                             <p className="text-[10px] text-dim uppercase mb-1">Device</p>
-                            <p className="text-sm font-bold text-white">{transferDevice.name}</p>
+                            <p className="text-sm font-bold text-foreground">{transferDevice.name}</p>
                             <p className="text-[10px] text-dim font-mono">{transferDevice.id || transferDevice._id}</p>
                         </div>
                         <div className="space-y-4">

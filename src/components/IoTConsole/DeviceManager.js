@@ -26,7 +26,7 @@ export default function DeviceManager({ devices, onAction, onAddRequest, onEditR
         <div className="space-y-6 animate-fadeIn">
             <div className="flex justify-between items-center mb-2">
                 <div>
-                   <h2 className="text-xl font-bold text-white tracking-tight">Device Fleet Management</h2>
+                   <h2 className="text-xl font-bold text-foreground tracking-tight">Device Fleet Management</h2>
                    <p className="text-xs text-dim mt-1">Orchestrate your hardware assets across the edge network.</p>
                 </div>
                 <Button onClick={onAddRequest} className="btn-glow px-6">
@@ -35,7 +35,7 @@ export default function DeviceManager({ devices, onAction, onAddRequest, onEditR
                 </Button>
             </div>
 
-            <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md overflow-hidden rounded-2xl card-hover-glow table-wrapper">
+            <Card className="border-divider/5 bg-content2/[0.02] backdrop-blur-md overflow-hidden rounded-2xl card-hover-glow table-wrapper">
                 <div className="overflow-x-auto">
                     <table className="iot-table table-hover">
                         <thead>
@@ -55,7 +55,7 @@ export default function DeviceManager({ devices, onAction, onAddRequest, onEditR
                                     <td>
                                         <div className="flex items-center gap-3">
                                             {getStatusIcon(device.status)}
-                                            <span className="font-medium text-white">{device.name}</span>
+                                            <span className="font-medium text-foreground">{device.name}</span>
                                         </div>
                                     </td>
                                     <td className="text-sm text-dim capitalize">{device.type}</td>

@@ -147,8 +147,8 @@ export default function SecurityRulesPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Editor */}
                 <div className="lg:col-span-2">
-                    <Card noPadding className="rules-editor-container border-white/5 overflow-hidden">
-                        <div className="editor-header bg-white/[0.03] p-4 border-b border-white/5 flex justify-between items-center">
+                    <Card noPadding className="rules-editor-container border-divider/5 overflow-hidden">
+                        <div className="editor-header bg-content2/[0.03] p-4 border-b border-divider/5 flex justify-between items-center">
                             <div className="flex items-center gap-2">
                                 <Code size={14} className="text-blue-400" />
                                 <span className="text-[10px] uppercase font-bold tracking-widest text-dim">security_rules.json</span>
@@ -179,7 +179,7 @@ export default function SecurityRulesPage() {
 
                 {/* Sidebar Info */}
                 <div className="lg:col-span-1 space-y-6">
-                    <Card className="border-white/5 text-left">
+                    <Card className="border-divider/5 text-left">
                         <h3 className="card-title text-sm flex items-center gap-2 mb-6">
                             <Eye size={16} className="text-dim" />
                             Reference Guide
@@ -189,11 +189,11 @@ export default function SecurityRulesPage() {
                             <div className="reference-section">
                                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-dim mb-3">Context Variables</h4>
                                 <ul className="space-y-3">
-                                    <li className="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <li className="flex justify-between items-center border-b border-divider/5 pb-2">
                                         <code className="text-blue-400 text-xs">auth.uid</code>
                                         <span className="text-[10px] text-dim">Subject Identifier</span>
                                     </li>
-                                    <li className="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <li className="flex justify-between items-center border-b border-divider/5 pb-2">
                                         <code className="text-blue-400 text-xs">data</code>
                                         <span className="text-[10px] text-dim">Object Payload</span>
                                     </li>
@@ -204,7 +204,7 @@ export default function SecurityRulesPage() {
                                 </ul>
                             </div>
 
-                            <div className="reference-section bg-white/[0.02] p-4 rounded-xl border border-white/5">
+                            <div className="reference-section bg-content2/[0.02] p-4 rounded-xl border border-divider/5">
                                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-dim mb-3">Schema Example</h4>
                                 <pre className="text-[10px] font-mono text-dim leading-relaxed whitespace-pre-wrap">
                                     {`"devices": {

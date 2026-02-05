@@ -1,5 +1,3 @@
-'use client';
-
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import iotService from '@/services/iotService';
 import adminService from '@/services/adminService';

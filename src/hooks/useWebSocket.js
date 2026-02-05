@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useContext } from 'react';
 import { AuthContext } from '@/context/AuthContext';
@@ -55,6 +53,11 @@ export default function useWebSocket() {
     // Connect to WebSocket
     const connect = useCallback(() => {
         if (!wsToken) return;
+
+        // Prevent multiple connections if already connected or connecting
+        if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+            return;
+        }
 
         try {
             const wsUrl = getWebSocketUrl();
@@ -133,6 +136,7 @@ export default function useWebSocket() {
     const disconnect = useCallback(() => {
         if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
         }
         if (wsRef.current) {
             // Clear ping interval if it exists
@@ -141,10 +145,17 @@ export default function useWebSocket() {
             }
 
             // Remove listeners to prevent reconnect logic from firing on intentional disconnect
-            wsRef.current.onclose = null;
-            wsRef.current.onerror = null;
+            const ws = wsRef.current;
+            ws.onclose = null;
+            ws.onerror = null;
+            ws.onmessage = null;
 
-            wsRef.current.close();
+            // Graceful shutdown to avoid "WebSocket is closed before the connection is established"
+            if (ws.readyState === WebSocket.CONNECTING) {
+                ws.onopen = () => ws.close();
+            } else {
+                ws.close();
+            }
             wsRef.current = null;
         }
         setIsConnected(false);

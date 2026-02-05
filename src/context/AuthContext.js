@@ -1,5 +1,3 @@
-'use client';
-
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
 

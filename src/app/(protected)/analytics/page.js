@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useEffect, useState, useMemo } from 'react';
 import Card from '@/components/UI/Card';
 import Button from '@/components/UI/Button';
@@ -74,7 +72,7 @@ const StatTile = ({ icon: Icon, label, value, accent, trend, trendValue, loading
   return (
     <Card className={`analytics-stat group hover:neon-border transition-all cursor-default ${loading ? 'animate-pulse' : ''}`}>
       <div className="flex items-start justify-between">
-        <div className={`analytics-stat-icon ${accent} !bg-white/5 shadow-inner`}>
+        <div className={`analytics-stat-icon ${accent} !bg-content2/5 shadow-inner`}>
           <Icon size={22} className="icon-glow" />
         </div>
         {trend && trendValue !== undefined && (
@@ -100,12 +98,12 @@ const StatTile = ({ icon: Icon, label, value, accent, trend, trendValue, loading
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl p-4 shadow-2xl">
-        <p className="text-white font-semibold text-sm mb-2">{label}</p>
+      <div className="bg-slate-900/95 backdrop-blur-xl border border-divider/10 rounded-xl p-4 shadow-2xl">
+        <p className="text-foreground font-semibold text-sm mb-2">{label}</p>
         {payload.map((entry, index) => (
           <div key={index} className="flex items-center justify-between gap-4 text-xs">
             <span className="text-dim">{entry.name}:</span>
-            <span className="font-bold text-white">{entry.value?.toLocaleString()}</span>
+            <span className="font-bold text-foreground">{entry.value?.toLocaleString()}</span>
           </div>
         ))}
       </div>
@@ -118,7 +116,7 @@ const CustomTooltip = ({ active, payload, label }) => {
    CHART CONTAINER WRAPPER
 ================================ */
 const ChartContainer = ({ title, icon: Icon, children, actions, loading }) => (
-  <Card className="!bg-black/40 !backdrop-blur-2xl border-white/5 hover:border-white/10 transition-all">
+  <Card className="!bg-black/40 !backdrop-blur-2xl border-divider/5 hover:border-divider/10 transition-all">
     <div className="flex items-center justify-between mb-6">
       <h3 className="card-title flex items-center gap-2">
         {Icon && <Icon size={16} className="text-blue-400" />}
@@ -260,7 +258,7 @@ export default function Analytics() {
       <div className="analytics-loading flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <BarChart3 className="mx-auto mb-4 text-blue-400 animate-pulse icon-glow" size={64} />
-          <p className="text-white text-lg font-semibold">Loading analytics...</p>
+          <p className="text-foreground text-lg font-semibold">Loading analytics...</p>
           <p className="text-dim text-sm mt-2">Gathering system metrics</p>
         </div>
       </div>
@@ -272,7 +270,7 @@ export default function Analytics() {
       <div className="analytics-error flex items-center justify-center min-h-[60vh]">
         <Card className="max-w-md text-center border-red-500/20 bg-red-500/5">
           <AlertCircle className="mx-auto mb-4 text-red-400" size={48} />
-          <h3 className="text-white font-bold text-lg mb-2">Failed to Load Analytics</h3>
+          <h3 className="text-foreground font-bold text-lg mb-2">Failed to Load Analytics</h3>
           <p className="text-dim text-sm mb-4">Unable to retrieve analytics data. Please try again.</p>
           <Button variant="secondary" onClick={fetchAnalytics}>
             <RefreshCw size={16} className="mr-2" />
@@ -309,10 +307,10 @@ export default function Analytics() {
         </div>
 
         <div className="flex gap-3 flex-wrap">
-          <div className="flex gap-2 items-center bg-white/5 border border-white/5 rounded-xl px-3 py-2">
+          <div className="flex gap-2 items-center bg-content2/5 border border-divider/5 rounded-xl px-3 py-2">
             <Calendar size={16} className="text-dim" />
             <select
-              className="bg-transparent border-none outline-none text-sm text-white cursor-pointer"
+              className="bg-transparent border-none outline-none text-sm text-foreground cursor-pointer"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
             >
@@ -379,11 +377,11 @@ export default function Analytics() {
 
       {/* Additional Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="border-white/5 bg-gradient-to-br from-blue-500/10 to-purple-500/10">
+        <Card className="border-divider/5 bg-gradient-to-br from-blue-500/10 to-purple-500/10">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-dim text-xs uppercase font-bold tracking-wider mb-1">System Uptime</p>
-              <p className="text-3xl font-bold text-white">{metrics?.uptime}%</p>
+              <p className="text-3xl font-bold text-foreground">{metrics?.uptime}%</p>
             </div>
             <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
               <CheckCircle2 size={32} className="text-blue-400" />
@@ -391,11 +389,11 @@ export default function Analytics() {
           </div>
         </Card>
 
-        <Card className="border-white/5 bg-gradient-to-br from-green-500/10 to-emerald-500/10">
+        <Card className="border-divider/5 bg-gradient-to-br from-green-500/10 to-emerald-500/10">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-dim text-xs uppercase font-bold tracking-wider mb-1">Avg Devices/User</p>
-              <p className="text-3xl font-bold text-white">{metrics?.avgDevicesPerUser}</p>
+              <p className="text-3xl font-bold text-foreground">{metrics?.avgDevicesPerUser}</p>
             </div>
             <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
               <Server size={32} className="text-green-400" />
@@ -403,11 +401,11 @@ export default function Analytics() {
           </div>
         </Card>
 
-        <Card className="border-white/5 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+        <Card className="border-divider/5 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-dim text-xs uppercase font-bold tracking-wider mb-1">Activity Events</p>
-              <p className="text-3xl font-bold text-white">
+              <p className="text-3xl font-bold text-foreground">
                 {activityData.reduce((sum, item) => sum + item.value, 0).toLocaleString()}
               </p>
             </div>
@@ -421,7 +419,7 @@ export default function Analytics() {
       {/* Chart Controls */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+          <h3 className="text-foreground font-semibold text-sm flex items-center gap-2">
             <Filter size={16} className="text-dim" />
             Chart Options
           </h3>
@@ -598,7 +596,7 @@ export default function Analytics() {
         </ChartContainer>
 
         {/* Activity List */}
-        <Card className="!bg-black/40 !backdrop-blur-2xl border-white/5">
+        <Card className="!bg-black/40 !backdrop-blur-2xl border-divider/5">
           <h3 className="card-title flex items-center gap-2 mb-6">
             <ActivityIcon size={16} className="text-blue-400" />
             Activity Summary
@@ -610,17 +608,17 @@ export default function Analytics() {
               activityData.map((activity, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 transition-all"
+                  className="flex items-center justify-between p-3 bg-content2/5 rounded-lg border border-divider/5 hover:bg-content2/10 transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                    <span className="text-white text-sm font-medium">{activity.name}</span>
+                    <span className="text-foreground text-sm font-medium">{activity.name}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-white text-lg font-bold">{activity.value.toLocaleString()}</span>
+                    <span className="text-foreground text-lg font-bold">{activity.value.toLocaleString()}</span>
                     <span className="text-dim text-xs">
                       {((activity.value / activityData.reduce((sum, a) => sum + a.value, 0)) * 100).toFixed(1)}%
                     </span>
@@ -633,14 +631,14 @@ export default function Analytics() {
       </div>
 
       {/* System Health Indicator */}
-      <Card className="mt-6 border-white/5 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10">
+      <Card className="mt-6 border-divider/5 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
               <CheckCircle2 size={24} className="text-green-400" />
             </div>
             <div>
-              <h4 className="text-white font-semibold">System Status</h4>
+              <h4 className="text-foreground font-semibold">System Status</h4>
               <p className="text-dim text-sm">All systems operational</p>
             </div>
           </div>

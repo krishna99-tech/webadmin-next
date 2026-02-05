@@ -1,8 +1,5 @@
-'use client';
-
 import React, { useContext } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Server,
@@ -63,14 +60,15 @@ const navGroups = [
 
 const Sidebar = () => {
     const { logout, currentUser } = useContext(AuthContext);
-    const pathname = usePathname();
+    const location = useLocation();
+    const pathname = location.pathname;
     const isAdmin = currentUser?.is_admin ?? currentUser?.role === 'Admin';
 
     return (
         <aside className="sidebar admin-sidebar">
             {/* Brand */}
             <div className="sidebar-brand">
-                <Link href="/" className="sidebar-logo-link flex items-center gap-3">
+                <Link to="/" className="sidebar-logo-link flex items-center gap-3">
                     <div className="sidebar-logo-icon">
                         <ShieldCheck size={20} className="text-blue-400 icon-glow" />
                     </div>
@@ -105,7 +103,7 @@ const Sidebar = () => {
                                     return (
                                         <Link
                                             key={item.path}
-                                            href={item.path}
+                                            to={item.path}
                                             className={`sidebar-link group ${isActive ? 'active' : ''}`}
                                             aria-current={isActive ? 'page' : undefined}
                                         >

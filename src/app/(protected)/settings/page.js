@@ -110,13 +110,13 @@ export default function Settings() {
                         onClick={() => setTheme(t.id)}
                         className={`theme-swatch ${t.class} ${theme === t.id ? 'active' : ''}`}
                       >
-                        {theme === t.id && <Zap size={16} className="text-white icon-glow" />}
+                        {theme === t.id && <Zap size={16} className="text-foreground icon-glow" />}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-white/5">
+                <div className="pt-4 border-t border-divider/5">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-dim mb-4 block">UI Density Control</label>
                   <div className="settings-toggle-group">
                     {['compact', 'comfortable', 'spacious'].map(d => (
@@ -143,7 +143,7 @@ export default function Settings() {
               </h3>
 
               <div className="settings-list">
-                <div className="settings-row p-4 !bg-white/5 rounded-xl mb-4 border border-white/5">
+                <div className="settings-row p-4 !bg-content2/5 rounded-xl mb-4 border border-divider/5">
                   <div>
                     <p className="settings-row-title">IP Access Restriction</p>
                     <p className="settings-row-desc">Limit admin access to specific network signatures</p>
@@ -188,7 +188,7 @@ export default function Settings() {
               </div>
 
               <div className="settings-list space-y-4">
-                <div className="p-4 bg-black/40 rounded-xl border border-white/5 flex items-center justify-between">
+                <div className="p-4 bg-black/40 rounded-xl border border-divider/5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400">
                       <Globe size={18} />
@@ -199,7 +199,7 @@ export default function Settings() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-2 text-dim hover:text-white transition-colors"><RefreshCw size={14} /></button>
+                    <button className="p-2 text-dim hover:text-foreground transition-colors"><RefreshCw size={14} /></button>
                     <button className="p-2 text-red-500/50 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
                   </div>
                 </div>
@@ -216,12 +216,12 @@ export default function Settings() {
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-blue-500/30 transition-all cursor-pointer">
+                <div className="p-4 bg-content2/5 rounded-xl border border-divider/5 group hover:border-blue-500/30 transition-all cursor-pointer">
                   <RefreshCw size={24} className="text-blue-400 mb-3 group-hover:rotate-180 transition-transform duration-500" />
                   <p className="font-bold text-sm">Purge Redis Cache</p>
                   <p className="text-[10px] text-dim">Invalidate all system-level cache keys</p>
                 </div>
-                <div className="p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-purple-500/30 transition-all cursor-pointer">
+                <div className="p-4 bg-content2/5 rounded-xl border border-divider/5 group hover:border-purple-500/30 transition-all cursor-pointer">
                   <Database size={24} className="text-purple-400 mb-3" />
                   <p className="font-bold text-sm">Prune Audit Logs</p>
                   <p className="text-[10px] text-dim">Remove logs older than 90 cycles</p>
@@ -269,9 +269,9 @@ export default function Settings() {
             </div>
           </Card>
 
-          <Card className="border-white/5">
+          <Card className="border-divider/5">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-slate-900 border border-white/5 flex items-center justify-center text-blue-400 shadow-inner">
+              <div className="w-12 h-12 rounded-xl bg-slate-900 border border-divider/5 flex items-center justify-center text-blue-400 shadow-inner">
                 <Cpu size={24} className="icon-glow" />
               </div>
               <div>

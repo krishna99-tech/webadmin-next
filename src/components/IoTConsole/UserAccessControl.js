@@ -1,6 +1,8 @@
 import React from 'react';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
+import { Avatar, AvatarIcon } from '@heroui/react';
+import { getAvatarClassNames } from '../../utils/avatarTheme';
 import { Plus, Edit, Trash2, Lock, Unlock } from 'lucide-react';
 
 export default function UserAccessControl({ users, onAction, onAddRequest, onEditRequest }) {
@@ -8,7 +10,7 @@ export default function UserAccessControl({ users, onAction, onAddRequest, onEdi
         <div className="space-y-6 animate-fadeIn">
             <div className="flex justify-between items-center mb-2">
                 <div>
-                   <h2 className="text-xl font-bold text-white tracking-tight">Identity & Access Control</h2>
+                   <h2 className="text-xl font-bold text-foreground tracking-tight">Identity & Access Control</h2>
                    <p className="text-xs text-dim mt-1">Manage platform authorities and security principals.</p>
                 </div>
                 <Button onClick={onAddRequest} className="btn-glow px-6">
@@ -17,7 +19,7 @@ export default function UserAccessControl({ users, onAction, onAddRequest, onEdi
                 </Button>
             </div>
 
-            <Card className="border-white/5 bg-white/[0.02] backdrop-blur-md overflow-hidden rounded-2xl card-hover-glow table-wrapper">
+            <Card className="border-divider/5 bg-content2/[0.02] backdrop-blur-md overflow-hidden rounded-2xl card-hover-glow table-wrapper">
                 <div className="overflow-x-auto">
                     <table className="iot-table table-hover">
                         <thead>
@@ -35,10 +37,13 @@ export default function UserAccessControl({ users, onAction, onAddRequest, onEdi
                                 <tr key={user.id || user._id}>
                                     <td>
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs uppercase">
-                                                {(user.full_name || user.username || '?')[0]}
-                                            </div>
-                                            <span className="font-medium text-white">{user.full_name || user.username}</span>
+                                            <Avatar
+                                                classNames={getAvatarClassNames(user.email || user.username || user.full_name || '')}
+                                                icon={<AvatarIcon />}
+                                                size="sm"
+                                                name={user.full_name || user.username || 'User'}
+                                            />
+                                            <span className="font-medium text-foreground">{user.full_name || user.username}</span>
                                         </div>
                                     </td>
                                     <td className="text-sm text-dim">{user.email}</td>

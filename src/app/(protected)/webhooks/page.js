@@ -128,7 +128,7 @@ export default function WebhooksPage() {
 
             {/* Create/Edit Form */}
             {showForm && (
-                <Card className="mb-8 border-white/10 animate-fadeInUp">
+                <Card className="mb-8 border-divider/10 animate-fadeInUp">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-blue-500/10 rounded-lg">
                             <Plus size={20} className="text-blue-400" />
@@ -189,7 +189,7 @@ export default function WebhooksPage() {
                             <p className="text-[10px] text-dim mt-2 italic px-1">Used to verify that payloads originated from ThingsNXT</p>
                         </div>
 
-                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                        <div className="flex items-center justify-between pt-4 border-t border-divider/5">
                             <div className="checkbox-group flex items-center gap-3">
                                 <label className="switch">
                                     <input
@@ -217,11 +217,11 @@ export default function WebhooksPage() {
             )}
 
             {/* Webhooks List */}
-            <Card className="border-white/5">
-                <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+            <Card className="border-divider/5">
+                <div className="flex justify-between items-center mb-8 border-b border-divider/5 pb-4">
                     <h3 className="card-title mb-0">Active Channels</h3>
                     {!loading && webhooks.length > 0 && (
-                        <span className="text-[10px] bg-white/5 px-3 py-1 rounded-full text-dim font-mono tracking-widest">
+                        <span className="text-[10px] bg-content2/5 px-3 py-1 rounded-full text-dim font-mono tracking-widest">
                             {webhooks.length} CONFIGURED
                         </span>
                     )}
@@ -233,14 +233,14 @@ export default function WebhooksPage() {
                         <p className="text-dim italic">Polling configured endpoints...</p>
                     </div>
                 ) : webhooks.length === 0 ? (
-                    <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-2xl">
+                    <div className="py-20 text-center border-2 border-dashed border-divider/5 rounded-2xl">
                         <WebhookIcon size={48} className="mx-auto mb-4 text-dim opacity-10" />
                         <p className="text-dim italic">No active webhooks found in your ecosystem.</p>
                     </div>
                 ) : (
                     <div className="webhooks-list grid gap-4">
                         {webhooks.map((webhook) => (
-                            <div key={webhook.id} className="webhook-item bg-white/[0.02] border border-white/5 p-5 rounded-2xl hover:bg-white/5 transition-all group">
+                            <div key={webhook.id} className="webhook-item bg-content2/[0.02] border border-divider/5 p-5 rounded-2xl hover:bg-content2/5 transition-all group">
                                 <div className="flex items-start gap-4">
                                     <div className="webhook-icon p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors">
                                         <WebhookIcon size={20} className="text-blue-400" />
@@ -248,7 +248,7 @@ export default function WebhooksPage() {
 
                                     <div className="webhook-content flex-1">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <div className="webhook-url font-mono text-sm text-white truncate max-w-[400px]">
+                                            <div className="webhook-url font-mono text-sm text-foreground truncate max-w-[400px]">
                                                 {webhook.url}
                                             </div>
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${webhook.active ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
@@ -262,7 +262,7 @@ export default function WebhooksPage() {
                                                 {webhook.events?.join(', ') || 'all'}
                                             </span>
                                             {webhook.trigger_count > 0 && (
-                                                <span className="flex items-center gap-1 px-3 py-0.5 bg-white/5 rounded-full">
+                                                <span className="flex items-center gap-1 px-3 py-0.5 bg-content2/5 rounded-full">
                                                     <Globe size={10} />
                                                     {webhook.trigger_count} TRIGGERS
                                                 </span>
@@ -289,7 +289,7 @@ export default function WebhooksPage() {
                                     <div className="webhook-actions flex gap-2 self-center">
                                         <button
                                             onClick={() => handleEdit(webhook)}
-                                            className="p-2 hover:bg-white/10 rounded-lg text-dim hover:text-white transition-colors"
+                                            className="p-2 hover:bg-content2/10 rounded-lg text-dim hover:text-foreground transition-colors"
                                             title="Edit Endpoint"
                                         >
                                             <Edit size={16} />

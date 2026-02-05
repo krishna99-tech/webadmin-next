@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Button from '@/components/UI/Button';
 import Card from '@/components/UI/Card';
@@ -311,59 +309,59 @@ export default function ActivityPage() {
 
             {/* Enhanced KPI Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                <Card className="border-white/5 bg-blue-500/5 flex items-center gap-4 p-4">
+                <Card className="border-divider/5 bg-blue-500/5 flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
                         <BarChart3 size={24} />
                     </div>
                     <div>
                         <p className="text-dim text-xs uppercase font-bold tracking-wider">Total Events</p>
-                        <h3 className="text-2xl font-bold text-white">{stats.total.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-bold text-foreground">{stats.total.toLocaleString()}</h3>
                     </div>
                 </Card>
                 
-                <Card className="border-white/5 bg-red-500/5 flex items-center gap-4 p-4">
+                <Card className="border-divider/5 bg-red-500/5 flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-400">
                         <AlertTriangle size={24} />
                     </div>
                     <div>
                         <p className="text-dim text-xs uppercase font-bold tracking-wider">Critical</p>
-                        <h3 className="text-2xl font-bold text-white">{stats.critical}</h3>
+                        <h3 className="text-2xl font-bold text-foreground">{stats.critical}</h3>
                     </div>
                 </Card>
                 
-                <Card className="border-white/5 bg-purple-500/5 flex items-center gap-4 p-4">
+                <Card className="border-divider/5 bg-purple-500/5 flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400">
                         <Shield size={24} />
                     </div>
                     <div>
                         <p className="text-dim text-xs uppercase font-bold tracking-wider">Operators</p>
-                        <h3 className="text-2xl font-bold text-white">{stats.admins}</h3>
+                        <h3 className="text-2xl font-bold text-foreground">{stats.admins}</h3>
                     </div>
                 </Card>
 
-                <Card className="border-white/5 bg-green-500/5 flex items-center gap-4 p-4">
+                <Card className="border-divider/5 bg-green-500/5 flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-400">
                         <TrendingUp size={24} />
                     </div>
                     <div>
                         <p className="text-dim text-xs uppercase font-bold tracking-wider">Last 24h</p>
-                        <h3 className="text-2xl font-bold text-white">{stats.last24h}</h3>
+                        <h3 className="text-2xl font-bold text-foreground">{stats.last24h}</h3>
                     </div>
                 </Card>
 
-                <Card className="border-white/5 bg-yellow-500/5 flex items-center gap-4 p-4">
+                <Card className="border-divider/5 bg-yellow-500/5 flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-400">
                         <CheckCircle2 size={24} />
                     </div>
                     <div>
                         <p className="text-dim text-xs uppercase font-bold tracking-wider">Success Rate</p>
-                        <h3 className="text-2xl font-bold text-white">{stats.successRate}%</h3>
+                        <h3 className="text-2xl font-bold text-foreground">{stats.successRate}%</h3>
                     </div>
                 </Card>
             </div>
 
             {/* Enhanced Filters */}
-            <Card className="border-white/5 bg-white/[0.01] mb-6">
+            <Card className="border-divider/5 bg-content2/[0.01] mb-6">
                 <div className="flex flex-col gap-6">
                     {/* Top Row: Search and View Controls */}
                     <div className="flex flex-col lg:flex-row gap-4 items-end">
@@ -372,19 +370,19 @@ export default function ActivityPage() {
                                 <Search size={10} className="inline mr-1" />
                                 Search Events
                             </label>
-                            <div className="bg-slate-900/50 border border-white/5 rounded-xl h-12 px-4 flex items-center gap-3 focus-within:border-blue-500/50 transition-all">
+                            <div className="bg-slate-900/50 border border-divider/5 rounded-xl h-12 px-4 flex items-center gap-3 focus-within:border-blue-500/50 transition-all">
                                 <Search size={18} className="text-dim" />
                                 <input
                                     type="text"
                                     placeholder="Search by action, admin, recipient, message..."
                                     value={logSearchTerm}
                                     onChange={e => { setLogSearchTerm(e.target.value); setCurrentPage(1); }}
-                                    className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-dim"
+                                    className="bg-transparent border-none outline-none text-sm w-full text-foreground placeholder-dim"
                                 />
                                 {logSearchTerm && (
                                     <button 
                                         onClick={() => { setLogSearchTerm(''); setCurrentPage(1); }}
-                                        className="text-dim hover:text-white transition-colors"
+                                        className="text-dim hover:text-foreground transition-colors"
                                     >
                                         <X size={16} />
                                     </button>
@@ -419,7 +417,7 @@ export default function ActivityPage() {
                                 Action Type
                             </label>
                             <select
-                                className="h-12 bg-slate-900/50 border border-white/5 rounded-xl px-4 text-sm w-full focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer text-white"
+                                className="h-12 bg-slate-900/50 border border-divider/5 rounded-xl px-4 text-sm w-full focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer text-foreground"
                                 value={logFilterAction}
                                 onChange={e => { setLogFilterAction(e.target.value); setCurrentPage(1); }}
                             >
@@ -441,7 +439,7 @@ export default function ActivityPage() {
                                     <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
                                     <input 
                                         type="date" 
-                                        className="bg-slate-900/50 border border-white/5 rounded-xl h-12 pl-10 pr-3 text-sm text-white outline-none focus:border-blue-500/50 transition-all w-full"
+                                        className="bg-slate-900/50 border border-divider/5 rounded-xl h-12 pl-10 pr-3 text-sm text-foreground outline-none focus:border-blue-500/50 transition-all w-full"
                                         value={logDateRange.start}
                                         onChange={e => setLogDateRange(prev => ({...prev, start: e.target.value}))}
                                     />
@@ -451,7 +449,7 @@ export default function ActivityPage() {
                                     <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
                                     <input 
                                         type="date" 
-                                        className="bg-slate-900/50 border border-white/5 rounded-xl h-12 pl-10 pr-3 text-sm text-white outline-none focus:border-blue-500/50 transition-all w-full"
+                                        className="bg-slate-900/50 border border-divider/5 rounded-xl h-12 pl-10 pr-3 text-sm text-foreground outline-none focus:border-blue-500/50 transition-all w-full"
                                         value={logDateRange.end}
                                         onChange={e => setLogDateRange(prev => ({...prev, end: e.target.value}))}
                                     />
@@ -464,7 +462,7 @@ export default function ActivityPage() {
                                 Per Page
                             </label>
                             <select
-                                className="h-12 bg-slate-900/50 border border-white/5 rounded-xl px-4 text-sm w-full focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer text-white"
+                                className="h-12 bg-slate-900/50 border border-divider/5 rounded-xl px-4 text-sm w-full focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer text-foreground"
                                 value={itemsPerPage}
                                 onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
                             >
@@ -531,11 +529,11 @@ export default function ActivityPage() {
 
             {/* Pagination Controls */}
             {filteredLogs.length > itemsPerPage && (
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 py-8 border-t border-white/5 mt-8">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 py-8 border-t border-divider/5 mt-8">
                     <div className="text-dim text-sm">
-                        Showing <span className="text-white font-bold">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
-                        <span className="text-white font-bold">{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> of{' '}
-                        <span className="text-white font-bold">{filteredLogs.length.toLocaleString()}</span> events
+                        Showing <span className="text-foreground font-bold">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                        <span className="text-foreground font-bold">{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> of{' '}
+                        <span className="text-foreground font-bold">{filteredLogs.length.toLocaleString()}</span> events
                     </div>
                     
                     <div className="flex items-center gap-2">
@@ -557,7 +555,7 @@ export default function ActivityPage() {
                         </Button>
                         
                         <span className="text-dim text-sm font-mono px-4">
-                            Page <span className="text-white font-bold">{currentPage}</span> of <span className="text-white font-bold">{totalPages}</span>
+                            Page <span className="text-foreground font-bold">{currentPage}</span> of <span className="text-foreground font-bold">{totalPages}</span>
                         </span>
                         
                         <Button 
@@ -601,7 +599,7 @@ function TimelineView({ logs, loading, empty, getActionIcon, getActionSeverity, 
 
     if (empty) {
         return (
-            <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
+            <div className="py-20 text-center border-2 border-dashed border-divider/5 rounded-3xl bg-content2/[0.01]">
                 <AlertCircle size={48} className="mx-auto mb-4 text-dim opacity-20" />
                 <p className="text-dim italic">No matching event logs found in the selected range.</p>
             </div>
@@ -617,7 +615,7 @@ function TimelineView({ logs, loading, empty, getActionIcon, getActionSeverity, 
                     const severityColors = {
                         critical: 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.4)]',
                         warning: 'border-yellow-500/50 shadow-[0_0_20px_rgba(234,179,8,0.3)]',
-                        normal: 'border-white/5 shadow-[0_0_15px_rgba(0,0,0,0.5)]'
+                        normal: 'border-divider/5 shadow-[0_0_15px_rgba(0,0,0,0.5)]'
                     };
 
                     return (
@@ -641,7 +639,7 @@ function TimelineView({ logs, loading, empty, getActionIcon, getActionSeverity, 
                                     <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border ${
                                         severity === 'critical' ? 'border-red-500/30 bg-red-500/10 text-red-400' :
                                         severity === 'warning' ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400' :
-                                        'border-white/5 bg-white/5 text-dim'
+                                        'border-divider/5 bg-content2/5 text-dim'
                                     }`}>
                                         {log.action?.replace(/_/g, ' ')}
                                     </span>
@@ -651,13 +649,13 @@ function TimelineView({ logs, loading, empty, getActionIcon, getActionSeverity, 
                                         </span>
                                     )}
                                 </div>
-                                <Card className="hover:bg-white/[0.05] hover:border-blue-500/20 border-white/5 transition-all">
+                                <Card className="hover:bg-content2/[0.05] hover:border-blue-500/20 border-divider/5 transition-all">
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-sm font-semibold text-white tracking-wide">
+                                            <h4 className="text-sm font-semibold text-foreground tracking-wide">
                                                 {log.subject || log.action?.replace(/_/g, ' ')}
                                             </h4>
-                                            <div className="flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg border border-white/5">
+                                            <div className="flex items-center gap-2 px-2 py-1 bg-content2/5 rounded-lg border border-divider/5">
                                                 <div className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-[8px] font-bold">
                                                     A
                                                 </div>
@@ -697,7 +695,7 @@ function TableView({ logs, loading, empty, getActionIcon, getActionSeverity, onL
 
     if (empty) {
         return (
-            <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
+            <div className="py-20 text-center border-2 border-dashed border-divider/5 rounded-3xl bg-content2/[0.01]">
                 <AlertCircle size={48} className="mx-auto mb-4 text-dim opacity-20" />
                 <p className="text-dim italic">No matching event logs found.</p>
             </div>
@@ -705,10 +703,10 @@ function TableView({ logs, loading, empty, getActionIcon, getActionSeverity, onL
     }
 
     return (
-        <Card className="border-white/5 bg-white/[0.01] overflow-hidden">
+        <Card className="border-divider/5 bg-content2/[0.01] overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full">
-                    <thead className="bg-white/[0.02] border-b border-white/5">
+                    <thead className="bg-content2/[0.02] border-b border-divider/5">
                         <tr>
                             <th className="text-left px-4 py-3 text-[10px] uppercase font-bold tracking-widest text-dim">Time</th>
                             <th className="text-left px-4 py-3 text-[10px] uppercase font-bold tracking-widest text-dim">Action</th>
@@ -724,7 +722,7 @@ function TableView({ logs, loading, empty, getActionIcon, getActionSeverity, onL
                             return (
                                 <tr 
                                     key={log.id || log._id || index}
-                                    className="border-b border-white/5 hover:bg-white/[0.03] transition-colors cursor-pointer"
+                                    className="border-b border-divider/5 hover:bg-content2/[0.03] transition-colors cursor-pointer"
                                     onClick={() => onLogClick(log)}
                                 >
                                     <td className="px-4 py-3 text-xs text-dim font-mono whitespace-nowrap">
@@ -733,7 +731,7 @@ function TableView({ logs, loading, empty, getActionIcon, getActionSeverity, onL
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
                                             {getActionIcon(log.action)}
-                                            <span className="text-xs text-white">
+                                            <span className="text-xs text-foreground">
                                                 {log.action?.replace(/_/g, ' ')}
                                             </span>
                                         </div>
@@ -741,7 +739,7 @@ function TableView({ logs, loading, empty, getActionIcon, getActionSeverity, onL
                                     <td className="px-4 py-3 text-xs text-dim font-mono">
                                         {log.admin_id?.slice(-8) || 'SYSTEM'}
                                     </td>
-                                    <td className="px-4 py-3 text-xs text-white">
+                                    <td className="px-4 py-3 text-xs text-foreground">
                                         {log.subject || log.recipient || '—'}
                                     </td>
                                     <td className="px-4 py-3 text-xs text-dim max-w-xs truncate">
@@ -779,17 +777,17 @@ function LogDetailModal({ log, onClose, getActionIcon }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn" onClick={onClose}>
             <Card 
-                className="max-w-2xl w-full max-h-[90vh] overflow-y-auto border-white/10 bg-slate-900/95 animate-slideUp" 
+                className="max-w-2xl w-full max-h-[90vh] overflow-y-auto border-divider/10 bg-slate-900/95 animate-slideUp" 
                 onClick={e => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-divider/5">
+                    <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
                         {getActionIcon(log.action)}
                         Event Details
                     </h3>
                     <button 
                         onClick={onClose}
-                        className="text-dim hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg"
+                        className="text-dim hover:text-foreground transition-colors p-2 hover:bg-content2/5 rounded-lg"
                     >
                         <X size={20} />
                     </button>
@@ -805,7 +803,7 @@ function LogDetailModal({ log, onClose, getActionIcon }) {
                     <DetailRow label="Message" value={log.message || 'No additional details'} fullWidth />
                     
                     {log.metadata && (
-                        <div className="mt-4 pt-4 border-t border-white/5">
+                        <div className="mt-4 pt-4 border-t border-divider/5">
                             <p className="text-[10px] uppercase font-bold tracking-widest text-dim mb-3">Metadata</p>
                             <pre className="bg-black/30 p-4 rounded-lg text-xs text-green-400 font-mono overflow-x-auto">
                                 {JSON.stringify(log.metadata, null, 2)}
@@ -814,7 +812,7 @@ function LogDetailModal({ log, onClose, getActionIcon }) {
                     )}
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-white/5 flex justify-end gap-3">
+                <div className="mt-6 pt-4 border-t border-divider/5 flex justify-end gap-3">
                     <Button variant="secondary" onClick={onClose}>
                         Close
                     </Button>
@@ -831,7 +829,7 @@ function DetailRow({ label, value, icon, mono, fullWidth }) {
                 {icon}
                 {label}
             </p>
-            <p className={`text-sm text-white ${mono ? 'font-mono bg-black/20 px-3 py-2 rounded-lg' : ''}`}>
+            <p className={`text-sm text-foreground ${mono ? 'font-mono bg-black/20 px-3 py-2 rounded-lg' : ''}`}>
                 {value}
             </p>
         </div>

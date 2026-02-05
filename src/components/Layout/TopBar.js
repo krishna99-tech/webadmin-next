@@ -1,8 +1,5 @@
-"use client";
-
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { useLocation, Link } from 'react-router-dom';
 import { Bell, Search, Info, AlertTriangle, Plus, Server, Users, Wifi, WifiOff, ChevronDown } from 'lucide-react';
 import { AuthContext } from '@/context/AuthContext';
 import adminService from '@/services/adminService';
@@ -22,7 +19,8 @@ const BREADCRUMB_LABELS = {
 
 const TopBar = () => {
   const { currentUser } = useContext(AuthContext);
-  const pathname = usePathname();
+  const location = useLocation();
+  const pathname = location.pathname;
   const [showNotifications, setShowNotifications] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -101,11 +99,11 @@ const TopBar = () => {
       <div className="topbar-left flex items-center gap-6">
         <div className="topbar-breadcrumb flex items-center gap-2">
           <span className="text-dim text-xs uppercase tracking-wider">Admin</span>
-          <span className="text-white/30">/</span>
+          <span className="text-foreground/30">/</span>
           {breadcrumbItems.map((item, i) => (
             <span key={i} className="flex items-center gap-2">
-              {i > 0 && <span className="text-white/30">/</span>}
-              <strong className="text-white font-semibold tracking-wide">
+              {i > 0 && <span className="text-foreground/30">/</span>}
+              <strong className="text-foreground font-semibold tracking-wide">
                 {item}
               </strong>
             </span>
@@ -120,7 +118,7 @@ const TopBar = () => {
                 ? 'bg-green-500/10 text-green-400 border-green-500/20'
                 : apiStatus === 'error'
                 ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                : 'bg-white/5 text-dim border-white/10'
+                : 'bg-content2/5 text-dim border-divider/10'
             }`}
           >
             {apiStatus === 'ok' ? (
@@ -160,10 +158,10 @@ const TopBar = () => {
             {showQuickActions && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowQuickActions(false)} />
-                <div className="absolute right-0 mt-2 w-48 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden animate-fadeIn py-2">
+                <div className="absolute right-0 mt-2 w-48 bg-slate-900/95 backdrop-blur-xl border border-divider/10 rounded-xl shadow-2xl z-20 overflow-hidden animate-fadeIn py-2">
                   <Link
                     href="/devices"
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-content2/5 transition-colors"
                     onClick={() => setShowQuickActions(false)}
                   >
                     <Server size={16} className="text-blue-400" />
@@ -171,7 +169,7 @@ const TopBar = () => {
                   </Link>
                   <Link
                     href="/users"
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-content2/5 transition-colors"
                     onClick={() => setShowQuickActions(false)}
                   >
                     <Users size={16} className="text-purple-400" />
@@ -198,7 +196,7 @@ const TopBar = () => {
         {/* Notifications */}
         <div className="relative">
           <button
-            className={`topbar-icon-btn ${showNotifications ? 'bg-white/10' : ''}`}
+            className={`topbar-icon-btn ${showNotifications ? 'bg-content2/10' : ''}`}
             onClick={() => setShowNotifications(!showNotifications)}
             aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount})` : ''}`}
           >
@@ -210,11 +208,11 @@ const TopBar = () => {
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
               <div
-                className="absolute right-0 mt-2 w-80 max-h-[400px] bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden animate-fadeIn flex flex-col"
+                className="absolute right-0 mt-2 w-80 max-h-[400px] bg-slate-900/95 backdrop-blur-xl border border-divider/10 rounded-xl shadow-2xl z-20 overflow-hidden animate-fadeIn flex flex-col"
                 role="dialog"
                 aria-label="Notifications"
               >
-                <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <div className="p-4 border-b border-divider/5 flex justify-between items-center bg-content2/5">
                   <h4 className="text-xs font-bold uppercase tracking-widest">Alerts</h4>
                   {unreadCount > 0 && (
                     <button onClick={markAllRead} className="text-[10px] text-blue-400 hover:underline">
@@ -232,7 +230,7 @@ const TopBar = () => {
                     notifications.map((n) => (
                       <div
                         key={n.id}
-                        className={`p-4 border-b border-white/5 hover:bg-white/5 transition-colors relative ${!n.read ? 'bg-blue-500/5' : ''}`}
+                        className={`p-4 border-b border-divider/5 hover:bg-content2/5 transition-colors relative ${!n.read ? 'bg-blue-500/5' : ''}`}
                       >
                         {!n.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />}
                         <div className="flex gap-3 pl-2">
@@ -240,7 +238,7 @@ const TopBar = () => {
                             {n.type === 'error' ? <AlertTriangle size={14} /> : <Info size={14} />}
                           </div>
                           <div>
-                            <p className={`text-xs ${!n.read ? 'text-white font-medium' : 'text-dim'}`}>{n.message}</p>
+                            <p className={`text-xs ${!n.read ? 'text-foreground font-medium' : 'text-dim'}`}>{n.message}</p>
                             <p className="text-[10px] text-gray-500 mt-1">
                               {new Date(n.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
@@ -252,7 +250,7 @@ const TopBar = () => {
                 </div>
                 <Link
                   href="/activity"
-                  className="p-3 text-center bg-white/5 border-t border-white/5 text-[10px] text-dim hover:text-white transition-colors"
+                  className="p-3 text-center bg-content2/5 border-t border-divider/5 text-[10px] text-dim hover:text-foreground transition-colors"
                   onClick={() => setShowNotifications(false)}
                 >
                   View Activity Log

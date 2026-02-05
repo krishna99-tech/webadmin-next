@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
+import Select from '../UI/Select';
+import Textarea from '../UI/Textarea';
 import { X, Smartphone, User, Shield, Info } from 'lucide-react';
 
 export default function Modals({ 
@@ -68,15 +70,15 @@ export default function Modals({
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] animate-fadeIn p-4">
-            <Card className="w-full max-w-md border-white/10 bg-slate-950/90 backdrop-blur-xl p-0 shadow-2xl relative overflow-hidden border-glow">
+            <Card className="w-full max-w-md border-divider/10 bg-slate-950/90 backdrop-blur-xl p-0 shadow-2xl relative overflow-hidden border-glow">
                 {/* Header */}
-                <div className="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex justify-between items-center">
+                <div className="px-6 py-4 bg-content2/[0.02] border-b border-divider/5 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-primary/10 text-primary">
                             {isDevice ? <Smartphone size={20} /> : <User size={20} />}
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-white leading-tight">{title}</h3>
+                            <h3 className="text-lg font-bold text-foreground leading-tight">{title}</h3>
                             <p className="text-[10px] text-dim uppercase tracking-wider">
                                 {isDevice ? 'Hardware Registry' : 'Identity Management'}
                             </p>
@@ -84,7 +86,7 @@ export default function Modals({
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="text-dim hover:text-white transition-colors"
+                        className="text-dim hover:text-foreground transition-colors"
                     >
                         <X size={20} />
                     </button>
@@ -106,20 +108,20 @@ export default function Modals({
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[10px] uppercase font-bold tracking-widest text-dim ml-1">Notification Body</label>
-                                <textarea 
+                                <Textarea 
                                     required
-                                    rows={4}
                                     className="input-field w-full resize-none py-3"
                                     placeholder="Enter the broadcast message for all active users..."
                                     value={formData.message || ''}
                                     onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                    minRows={4}
                                 />
                             </div>
                             <div className="flex items-center gap-2 px-1">
                                 <input 
                                     type="checkbox" 
                                     id="targeted"
-                                    className="w-4 h-4 rounded border-white/10 bg-slate-800"
+                                    className="w-4 h-4 rounded border-divider/10 bg-slate-800"
                                     checked={!!formData.recipients}
                                     onChange={e => setFormData({ ...formData, recipients: e.target.checked ? [] : null })}
                                 />
@@ -152,16 +154,18 @@ export default function Modals({
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[10px] uppercase font-bold tracking-widest text-dim ml-1">Assign Owner</label>
-                                <select 
+                                <Select 
                                     className="input-field w-full bg-slate-800"
                                     value={formData.user_id || ''}
                                     onChange={e => setFormData({ ...formData, user_id: e.target.value })}
-                                >
-                                    <option value="">System / Orphaned</option>
-                                    {users.map(u => (
-                                        <option key={u.id} value={u.id}>{u.username} ({u.email || 'No email'})</option>
-                                    ))}
-                                </select>
+                                    options={[
+                                        { value: '', label: 'System / Orphaned' },
+                                        ...users.map(u => ({
+                                            value: u.id,
+                                            label: `${u.username} (${u.email || 'No email'})`
+                                        }))
+                                    ]}
+                                />
                             </div>
                         </>
                     ) : (
@@ -216,26 +220,28 @@ export default function Modals({
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] uppercase font-bold tracking-widest text-dim ml-1">Security Role</label>
-                                    <select 
+                                    <Select 
                                         className="input-field w-full bg-slate-800"
                                         value={formData.role || 'User'}
                                         onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                    >
-                                        <option value="User">User</option>
-                                        <option value="Admin">Administrator</option>
-                                        <option value="Technician">Technician</option>
-                                    </select>
+                                        options={[
+                                            { value: 'User', label: 'User' },
+                                            { value: 'Admin', label: 'Administrator' },
+                                            { value: 'Technician', label: 'Technician' },
+                                        ]}
+                                    />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] uppercase font-bold tracking-widest text-dim ml-1">Status</label>
-                                    <select 
+                                    <Select 
                                         className="input-field w-full bg-slate-800"
                                         value={formData.is_active ? 'active' : 'inactive'}
                                         onChange={e => setFormData({ ...formData, is_active: e.target.value === 'active' })}
-                                    >
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Locked</option>
-                                    </select>
+                                        options={[
+                                            { value: 'active', label: 'Active' },
+                                            { value: 'inactive', label: 'Locked' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
                         </>

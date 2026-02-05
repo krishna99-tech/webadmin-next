@@ -208,7 +208,7 @@ export default function UserDetail({ params }) {
 
                         <div className="h-[250px] w-full">
                             {telemetryData.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-dim border border-dashed border-white/5 rounded-lg">
+                                <div className="h-full flex flex-col items-center justify-center text-dim border border-dashed border-divider/5 rounded-lg">
                                     <Activity size={32} className="mb-2 opacity-20" />
                                     <p className="text-sm">Waiting for incoming data...</p>
                                 </div>

@@ -87,7 +87,7 @@ function BroadcastPageContent() {
             {/* Main Form Section */}
             <div className="broadcast-column">
                 <Card noPadding className="broadcast-form-card">
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                    <div className="p-6 border-b border-divider/5 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
                                 <Mail size={20} />
@@ -114,7 +114,7 @@ function BroadcastPageContent() {
                                 onChange={(e) => setSubject(e.target.value)}
                                 placeholder="Enter a descriptive subject"
                                 disabled={loading}
-                                className="bg-black/20 border-white/10"
+                                className="bg-black/20 border-divider/10"
                             />
                         </div>
 
@@ -136,7 +136,7 @@ function BroadcastPageContent() {
                                     id="sendToAll"
                                     checked={sendToAll}
                                     onChange={(e) => setSendToAll(e.target.checked)}
-                                    className="w-4 h-4 rounded border-white/20 bg-transparent text-blue-500 focus:ring-blue-500"
+                                    className="w-4 h-4 rounded border-divider/20 bg-transparent text-blue-500 focus:ring-blue-500"
                                     disabled={loading}
                                 />
                                 <label htmlFor="sendToAll" className="text-sm font-medium cursor-pointer">
@@ -157,7 +157,7 @@ function BroadcastPageContent() {
                                     onChange={(e) => setRecipients(e.target.value)}
                                     placeholder="user1@example.com, user2@example.com"
                                     disabled={loading}
-                                    className="bg-black/20 border-white/10"
+                                    className="bg-black/20 border-divider/10"
                                 />
                             </div>
                         )}
@@ -206,7 +206,7 @@ function BroadcastPageContent() {
                     </div>
                 </Card>
 
-                <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-white/10 text-center">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-divider/10 text-center">
                     <p className="text-[10px] text-gray-400 leading-relaxed">
                         Notifications use secure SMTP tunnels. <br />
                         Daily quota: ✨ Unlimited (Admin)
