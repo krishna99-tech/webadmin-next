@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import Card from '../components/UI/Card';
-import Button from '../components/UI/Button';
-import Textarea from '../components/UI/Textarea';
+import { 
+    Card, 
+    CardBody, 
+    Button, 
+    Textarea, 
+    Divider,
+    Chip,
+} from '@heroui/react';
 import { useToast } from '../context/ToastContext';
 import adminService from '../services/adminService';
 import {
@@ -11,8 +16,13 @@ import {
     AlertTriangle,
     CheckCircle,
     Code,
-    Eye
+    Eye,
+    Terminal,
+    Zap,
+    X,
 } from 'lucide-react';
+import PageHeader from '../components/Layout/PageHeader';
+import PageShell from '../components/Layout/PageShell';
 
 export default function SecurityRulesPage() {
     const toast = useToast();
@@ -37,8 +47,8 @@ export default function SecurityRulesPage() {
                 setRules('{}');
             }
         } catch (err) {
-            console.error('Failed to fetch rules', err);
-            setError('Failed to load security rules from server. (Error 404 or backend unresponsive)');
+            console.error('Fetch Error:', err);
+            setError('Heuristic decoding failed. Terminal unreachable.');
             setRules('{}');
         } finally {
             setLoading(false);
@@ -55,17 +65,15 @@ export default function SecurityRulesPage() {
             try {
                 parsedRules = JSON.parse(rules);
             } catch (jsonErr) {
-                throw new Error('Invalid JSON format: ' + jsonErr.message);
+                throw new Error('MALFORMED_JSON: ' + jsonErr.message);
             }
 
             await adminService.updateSecurityRules(parsedRules);
             setSuccess(true);
-            setError(null);
-            toast.success('Security rules deployed');
-            setTimeout(() => setSuccess(false), 3000);
+            toast.success('Security vectors deployed successfully');
+            setTimeout(() => setSuccess(false), 5000);
         } catch (err) {
-            console.error('Failed to update rules', err);
-            const msg = err.message || 'Failed to update security rules.';
+            const msg = err.message || 'Deployment rejected by kernel.';
             setError(msg);
             toast.error(msg);
         } finally {
@@ -74,147 +82,154 @@ export default function SecurityRulesPage() {
     };
 
     const handleReset = () => {
-        if (confirm('Are you sure you want to discard your recent changes? This will revert to the server-side version.')) {
-            fetchRules();
-        }
+        fetchRules();
     };
 
     return (
-        <div className="security-rules-page animate-fadeInUp">
-            <div className="page-header mb-8">
-                <div>
-                    <h2 className="page-title flex items-center gap-3">
-                        <Shield className="icon-glow text-primary" size={28} />
-                        Security Rules
-                    </h2>
-                    <p className="dashboard-subtitle mt-1">
-                        Manage platform access control using JSON security definitions
-                    </p>
-                </div>
-                <div className="flex gap-3">
-                    <Button
-                        variant="secondary"
-                        onClick={handleReset}
-                        disabled={loading || saving}
-                    >
-                        <RotateCcw size={18} />
-                        Discard
-                    </Button>
-                    <Button
-                        variant="primary"
-                        className="btn-broadcast-premium"
-                        onClick={handleSave}
-                        disabled={loading || saving}
-                    >
-                        <Save size={18} />
-                        {saving ? 'Syncing...' : 'Deploy Rules'}
-                    </Button>
+        <PageShell gap="2rem" paddingBottom="5rem">
+            <PageHeader
+                icon={Shield}
+                title="Security Protocols"
+                subtitle="Programmable access control logic for the ThingsNXT edge ecosystem."
+                actions={
+                    <div className="flex items-center gap-3">
+                        <Button 
+                            variant="flat" 
+                            onPress={handleReset}
+                            startContent={<RotateCcw size={16} />}
+                            style={{ height: '2.75rem', borderRadius: 'var(--radius-lg)', fontWeight: 600, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-dim)' }}
+                        >
+                            Revert Changes
+                        </Button>
+                        <Button 
+                            color="primary" 
+                            onPress={handleSave} 
+                            isLoading={saving}
+                            style={{ height: '2.75rem', borderRadius: 'var(--radius-lg)', fontWeight: 700, px: '2rem', boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)' }}
+                            startContent={!saving && <Save size={16} />}
+                        >
+                            Deploy Protocol
+                        </Button>
+                    </div>
+                }
+            />
+
+            {/* Critical Warning */}
+            <div className="elite-card" style={{ background: 'rgba(239, 68, 68, 0.05)', borderColor: 'rgba(239, 68, 68, 0.1)' }}>
+                <div className="elite-card-body" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ width: '3rem', height: '3rem', borderRadius: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                        <AlertTriangle size={24} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <h4 className="text-tactical" style={{ color: 'var(--danger)', fontSize: '10px' }}>Kernel Configuration Zone</h4>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.25rem', margin: 0 }}>
+                            Modifying the ruleset instantly alters the security perimeter. 
+                            Logical errors will destabilize administrative and nodal transmissions.
+                        </p>
+                    </div>
+                    <div className="hidden md:block">
+                        <Chip size="sm" variant="flat" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', fontSize: '9px', fontWeight: 800, height: '1.5rem', border: 'none' }}>LIVE_DEPLOYMENT</Chip>
+                    </div>
                 </div>
             </div>
 
-            <div className="status-message status-warning mb-6 border-yellow-500/20 bg-yellow-500/5 py-4 px-6 rounded-2xl animate-pulse-slow">
-                <AlertTriangle size={24} className="text-yellow-400 shrink-0" />
-                <div className="text-left">
-                    <p className="font-bold text-yellow-400 text-sm mb-1 uppercase tracking-widest">CRITICAL CONFIGURATION ZONE</p>
-                    <p className="text-xs text-yellow-200/70">
-                        Rules are evaluated live. Invalid logic can instantly disrupt platform connectivity for all users and instruments.
-                    </p>
-                </div>
-            </div>
-
+            {/* Status Messages */}
             {error && (
-                <div className="status-message status-error mb-6 border-red-500/20 bg-red-500/5 p-4 rounded-xl">
-                    <AlertTriangle size={18} />
-                    <span className="text-xs font-medium">{error}</span>
-                </div>
-            )}
-            {success && (
-                <div className="status-message status-success mb-6 border-green-500/20 bg-green-500/5 p-4 rounded-xl">
-                    <CheckCircle size={18} />
-                    <span className="text-xs font-medium">Security protocol successfully synchronized!</span>
+                <div style={{ padding: '1rem 1.5rem', borderRadius: '1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="animate-fade-in">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Terminal size={14} className="text-danger" />
+                        <p className="text-tactical" style={{ color: 'var(--danger)', fontSize: '9px' }}>{error}</p>
+                    </div>
+                    <Button isIconOnly variant="light" size="sm" onPress={() => setError(null)} style={{ opacity: 0.5, color: 'var(--danger)' }}><X size={14}/></Button>
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    <Card noPadding className="rules-editor-container border-divider/5 overflow-hidden">
-                        <div className="editor-header bg-content2/[0.03] p-4 border-b border-divider/5 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <Code size={14} className="text-blue-400" />
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-dim">security_rules.json</span>
+            {success && (
+                <div style={{ padding: '1rem 1.5rem', borderRadius: '1rem', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', gap: '0.75rem', alignItems: 'center' }} className="animate-fade-in">
+                    <CheckCircle size={14} className="text-success" />
+                    <p className="text-tactical" style={{ color: 'var(--success)', fontSize: '9px' }}>Security Vectors Synchronized</p>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Editor Module */}
+                <div className="lg:col-span-8">
+                    <div className="elite-card" style={{ height: '640px', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ height: '3.5rem', padding: '0 1.5rem', borderBottom: '1px solid var(--border-dim)', background: 'rgba(255, 255, 255, 0.01)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <Code size={16} className="text-primary" />
+                                <span className="text-tactical" style={{ fontSize: '9px', fontStyle: 'italic' }}>rules_definition.json</span>
                             </div>
-                            <div className="flex gap-1">
-                                <span className="w-2 h-2 rounded-full bg-red-500/30"></span>
-                                <span className="w-2 h-2 rounded-full bg-yellow-500/30"></span>
-                                <span className="w-2 h-2 rounded-full bg-green-500/30"></span>
+                            <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.05)' }} />
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.05)' }} />
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.05)' }} />
                             </div>
                         </div>
-
-                        {loading ? (
-                            <div className="p-20 text-center">
-                                <Shield className="mx-auto mb-4 text-blue-400 animate-spin" size={32} />
-                                <p className="text-dim italic">decrypting ruleset...</p>
-                            </div>
-                        ) : (
+                        <div style={{ flex: 1, padding: 0 }}>
                             <Textarea
-                                className="rules-textarea w-full h-[500px] bg-transparent text-blue-100 font-mono text-sm p-6 outline-none resize-none msg-textarea"
+                                variant="flat"
                                 value={rules}
-                                onChange={(e) => setRules(e.target.value)}
-                                placeholder="Enter structural rules JSON here..."
-                                spellCheck="false"
-                                minRows={20}
+                                onValueChange={setRules}
+                                disableAutosize
+                                classNames={{
+                                    base: "h-full",
+                                    inputWrapper: "h-full bg-transparent p-6",
+                                    input: "font-mono text-sm text-primary placeholder-slate-700 leading-relaxed custom-scrollbar",
+                                }}
                             />
-                        )}
-                    </Card>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="lg:col-span-1 space-y-6">
-                    <Card className="border-divider/5 text-left">
-                        <h3 className="card-title text-sm flex items-center gap-2 mb-6">
-                            <Eye size={16} className="text-dim" />
-                            Reference Guide
-                        </h3>
-
-                        <div className="space-y-6">
-                            <div className="reference-section">
-                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-dim mb-3">Context Variables</h4>
-                                <ul className="space-y-3">
-                                    <li className="flex justify-between items-center border-b border-divider/5 pb-2">
-                                        <code className="text-blue-400 text-xs">auth.uid</code>
-                                        <span className="text-[10px] text-dim">Subject Identifier</span>
-                                    </li>
-                                    <li className="flex justify-between items-center border-b border-divider/5 pb-2">
-                                        <code className="text-blue-400 text-xs">data</code>
-                                        <span className="text-[10px] text-dim">Object Payload</span>
-                                    </li>
-                                    <li className="flex justify-between items-center">
-                                        <code className="text-blue-400 text-xs">root</code>
-                                        <span className="text-[10px] text-dim">Global State</span>
-                                    </li>
-                                </ul>
+                {/* Reference Module */}
+                <div className="lg:col-span-4">
+                    <div className="elite-card">
+                        <div className="elite-card-body" style={{ padding: '2rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
+                                <Eye className="text-muted" size={18} style={{ opacity: 0.4 }} />
+                                <h4 className="text-tactical" style={{ color: 'var(--text-main)' }}>Protocol Ref</h4>
                             </div>
 
-                            <div className="reference-section bg-content2/[0.02] p-4 rounded-xl border border-divider/5">
-                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-dim mb-3">Schema Example</h4>
-                                <pre className="text-[10px] font-mono text-dim leading-relaxed whitespace-pre-wrap">
-                                    {`"devices": {
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.4, borderBottom: '1px solid var(--border-dim)', paddingBottom: '0.5rem' }}>Environment Variables</p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {[
+                                            { key: 'auth.uid', desc: 'Principal ID' },
+                                            { key: 'data', desc: 'Payload' },
+                                            { key: 'root', desc: 'Platform Index' }
+                                        ].map(item => (
+                                            <div key={item.key} className="flex-between">
+                                                <code style={{ color: 'var(--primary)', fontSize: '11px', fontWeight: 700, background: 'rgba(59, 130, 246, 0.05)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontFamily: 'monospace' }}>.{item.key}</code>
+                                                <span className="text-tactical" style={{ fontSize: '8px', opacity: 0.3 }}>{item.desc}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div style={{ padding: '1.5rem', background: 'rgba(2, 6, 23, 0.5)', borderRadius: '1rem', border: '1px solid var(--border-dim)' }}>
+                                    <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.4, marginBottom: '1rem' }}>Syntax Pattern</p>
+                                    <pre style={{ fontSize: '10px', fontFamily: 'monospace', color: 'rgba(59, 130, 246, 0.4)', margin: 0, lineHeight: 1.6 }}>
+{`"devices": {
   "$id": {
-    ".read": "auth.uid == data.user_id",
-    ".write": "auth.uid == data.user_id"
+    ".read": "auth.uid == data.user_id"
   }
 }`}
-                                </pre>
-                            </div>
+                                    </pre>
+                                </div>
 
-                            <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-xl">
-                                <p className="text-[10px] text-blue-300 leading-relaxed italic">
-                                    Identity Guard rules are evaluated for every platform request. Optimized rules improve platform latency by up to 15%.
-                                </p>
+                                <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.03)', borderRadius: '1rem', border: '1px solid rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'start', gap: '1rem' }}>
+                                    <Zap size={18} className="text-primary" style={{ marginTop: '0.1rem', flexShrink: 0 }} />
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
+                                        Heuristic evaluation is performed at the edge. Optimized rules can improve overall link velocity.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </Card>
+                    </div>
                 </div>
             </div>
-        </div>
+        </PageShell>
     );
 }

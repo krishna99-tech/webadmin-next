@@ -1,11 +1,31 @@
 /**
- * Services - single entry for global API usage
- * import api, { APIs } from '@/services';
- * import { APIs } from '@/services';  // APIs.auth, APIs.admin, APIs.devices, APIs.iot, APIs.webhooks
+ * Services Entry Point
+ * 
+ * Usage:
+ *   import { adminService, authService } from '@/services';
+ *   import api from '@/services/api';
  */
-export { default, APIs } from './api';
-export { default as authService } from './authService';
-export { default as adminService } from './adminService';
-export { default as deviceService } from './deviceService';
-export { default as iotService } from './iotService';
-export { default as webhookService } from './webhookService';
+import api from './api';
+import authService from './authService';
+import adminService from './adminService';
+import deviceService from './deviceService';
+import iotService from './iotService';
+import webhookService from './webhookService';
+
+export {
+  api,
+  authService,
+  adminService,
+  deviceService,
+  iotService,
+  webhookService
+};
+
+// Compatibility layer for legacy "APIs" pattern
+export const APIs = {
+  auth: authService,
+  admin: adminService,
+  devices: deviceService,
+  iot: iotService,
+  webhooks: webhookService,
+};

@@ -1,12 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Card from '../components/UI/Card';
-import Button from '../components/UI/Button';
+import {
+    Card, 
+    CardBody, 
+    Button, 
+    Tabs, 
+    Tab, 
+    Chip, 
+    Divider,
+    Progress,
+    Avatar,
+} from '@heroui/react';
 import adminService from '../services/adminService';
 import {
-    Smartphone, Plus, Trash2, Edit2, Activity, Layout,
-    Settings, Globe, Shield, Zap, Info, Clock, RefreshCw, Code, ArrowLeft, User
+    Smartphone, 
+    Plus, 
+    Trash2, 
+    Edit2, 
+    Activity, 
+    Layout,
+    Settings, 
+    Globe, 
+    Shield, 
+    Zap, 
+    Clock, 
+    RefreshCw, 
+    ArrowLeft, 
+    Terminal,
+    Cpu,
+    Database,
+    Signal,
+    MoreHorizontal
 } from 'lucide-react';
+import PageHeader from '../components/Layout/PageHeader';
+import PageShell from '../components/Layout/PageShell';
 
 export default function DeviceDetailPage() {
     const { id } = useParams();
@@ -18,7 +45,6 @@ export default function DeviceDetailPage() {
     const [widgets, setWidgets] = useState([]);
     const [telemetry, setTelemetry] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('interface');
 
     useEffect(() => {
         if (!id) return;
@@ -59,246 +85,331 @@ export default function DeviceDetailPage() {
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-dim animate-pulse">Establishing secure link to device...</div>;
-    if (!device) return <div className="p-10 text-center text-red-400">Device offline or not found in registry.</div>;
+    if (loading && !device) {
+        return (
+            <div className="flex-center" style={{ minHeight: '60vh', flexDirection: 'column', gap: '1rem' }}>
+                <Cpu className="text-primary animate-pulse" size={64} style={{ filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))' }} />
+                <p className="text-tactical" style={{ fontSize: '10px', letterSpacing: '0.3em' }}>Syncing with Node Assets...</p>
+            </div>
+        );
+    }
+
+    if (!device) return <div className="text-center animate-pulse" style={{ padding: '4rem', color: 'var(--danger)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Device Node Not Accessible</div>;
 
     return (
-        <div className="device-detail-page animate-fadeInUp">
-            <div className="dashboard-header mb-8">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="user-back-btn">
-                        <ArrowLeft size={18} />
-                    </button>
-                    <div>
-                        <h2 className="dashboard-title flex items-center gap-3">
-                            <Smartphone size={24} className="text-blue-400" />
-                            {device.name}
-                        </h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] font-mono py-0.5 px-1.5 bg-content2/5 rounded text-dim">UUID: {device.id || device._id}</span>
-                            <span className="text-[10px] font-mono py-0.5 px-1.5 bg-blue-500/10 rounded text-blue-400">USER: {device.user_id}</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex gap-4 items-center">
-                    {device.owner_name && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/5 border border-blue-500/10">
-                            <User size={14} className="text-blue-400" />
-                            <span className="text-[10px] font-bold text-blue-200 uppercase tracking-tight">{device.owner_name}</span>
-                        </div>
-                    )}
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${device.status === 'online' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${device.status === 'online' ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
-                        {device.status}
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex gap-6 mb-6 border-b border-divider/5 px-2">
-                {['interface', 'system', 'logs'].map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`pb-3 text-sm font-medium capitalize transition-all relative ${activeTab === tab ? 'text-blue-400' : 'text-dim hover:text-foreground'}`}
+        <PageShell gap="2rem" paddingBottom="5rem">
+            <PageHeader
+                icon={Smartphone}
+                title={device.name}
+                subtitle={
+                    <span className="inline-flex items-center gap-3 flex-wrap">
+                        <code style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--text-dim)', background: 'rgba(255, 255, 255, 0.03)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-dim)' }}>ID: {device.id}</code>
+                        <span style={{ width: '1px', height: '0.75rem', background: 'var(--border-dim)' }} />
+                        <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.5 }}>Provisioned Node</span>
+                    </span>
+                }
+                badge={
+                    <Chip 
+                        variant="flat" 
+                        style={{ 
+                            fontWeight: 800, 
+                            fontSize: '9px', 
+                            letterSpacing: '0.1em', 
+                            border: 'none',
+                            background: device.status === 'online' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            color: device.status === 'online' ? 'var(--success)' : 'var(--danger)'
+                        }}
+                        startContent={<div className="status-dot" style={{ background: device.status === 'online' ? 'var(--success)' : 'var(--danger)', width: '6px', height: '6px', margin: '0 4px' }} />}
                     >
-                        {tab}
-                        {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400 rounded-full"></div>}
-                    </button>
-                ))}
-            </div>
+                        {device.status?.toUpperCase()}
+                    </Chip>
+                }
+                actions={
+                    <div className="flex items-center gap-3">
+                        <Button 
+                            isIconOnly 
+                            variant="light" 
+                            onPress={() => navigate(-1)}
+                            style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-dim)', borderRadius: '1rem', height: '3.5rem', width: '3.5rem', minWidth: '3.5rem' }}
+                        >
+                            <ArrowLeft size={20} />
+                        </Button>
+                        <Button variant="flat" style={{ fontWeight: 800, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', height: '3rem' }} startContent={<Edit2 size={16}/>}>Modify Node</Button>
+                        <Button color="danger" variant="flat" style={{ fontWeight: 800, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', height: '3rem' }} startContent={<Trash2 size={16}/>}>Decommission</Button>
+                    </div>
+                }
+            />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                    {activeTab === 'interface' && (
-                        <Card>
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="section-title mb-1">
-                                        Interface Builder
-                                        {activeDashboard && <span className="text-blue-400 ml-2 text-xs font-mono">[{activeDashboard.name}]</span>}
-                                    </h3>
-                                    <p className="text-xs text-dim">Manage the physical components of the user interface.</p>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Main Content Area */}
+                <div className="lg:col-span-8 flex flex-col gap-8">
+                    <Tabs 
+                        aria-label="Device details" 
+                        variant="underlined"
+                        classNames={{
+                            tabList: "gap-8 border-b border-divider/5",
+                            cursor: "bg-blue-500 w-full",
+                            tab: "max-w-fit px-0 h-12 font-black uppercase tracking-widest text-[10px]",
+                            tabContent: "group-data-[selected=true]:text-blue-500"
+                        }}
+                    >
+                        <Tab
+                            key="interface"
+                            title={
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Layout size={14}/>
+                                    <span>Signal Interface</span>
                                 </div>
-                                <Button variant="primary" className="btn-sm">
-                                    <Plus size={14} />
-                                    Add Widget
-                                </Button>
-                            </div>
-
-                            <div className="space-y-3">
-                                {widgets.length === 0 ? (
-                                    <div className="p-10 text-center border border-dashed border-divider/10 rounded-lg text-dim text-xs">
-                                        No widgets configured for this device interface.
-                                    </div>
-                                ) : (
-                                    widgets.map((w, idx) => (
-                                        <div key={w._id || w.id || idx} className="p-4 rounded-lg bg-content2/5 border border-divider/5 hover:border-blue-500/20 transition-all flex justify-between items-center group">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`p-2 rounded bg-black/40 ${w.type === 'led' ? 'text-purple-400' : 'text-blue-400'}`}>
-                                                    {w.type === 'led' ? <Layout size={18} /> : <Activity size={18} />}
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-sm font-semibold">{w.label || w.type}</h4>
-                                                    <p className="text-[10px] text-dim font-mono">
-                                                        TYPE: {w.type.toUpperCase()} |
-                                                        PIN: {w.config?.virtual_pin?.toUpperCase() || 'N/A'} |
-                                                        VALUE: {w.value ?? 'N/A'}
-                                                    </p>
-                                                </div>
+                            }
+                        >
+                            <div style={{ marginTop: '2rem' }}>
+                                <div className="elite-card" style={{ background: 'rgba(255, 255, 255, 0.01)' }}>
+                                    <div className="elite-card-body" style={{ padding: '2.5rem' }}>
+                                        <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
+                                            <div>
+                                                <h4 className="text-tactical" style={{ color: 'var(--text-main)', fontSize: '12px' }}>Dynamic UI Matrix</h4>
+                                                <p className="text-dim" style={{ fontSize: '11px', marginTop: '0.5rem', fontStyle: 'italic', fontWeight: 500 }}>Managed structural widgets for this individual asset</p>
                                             </div>
-                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-1.5 hover:bg-content2/10 rounded text-dim transition-colors"><Edit2 size={14} /></button>
-                                                <button className="p-1.5 hover:bg-content2/10 rounded text-red-400 transition-colors"><Trash2 size={14} /></button>
-                                            </div>
+                                            <Button color="primary" variant="flat" style={{ fontWeight: 800, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }} startContent={<Plus size={14}/>}>Deploy Widget</Button>
                                         </div>
-                                    ))
-                                )}
-                            </div>
-                        </Card>
-                    )}
 
-                    {activeTab === 'system' && (
-                        <div className="space-y-6">
-                            <Card>
-                                <h3 className="section-title">Device Configuration</h3>
-                                <div className="space-y-4">
-                                    <pre className="p-4 bg-black/40 rounded text-[11px] font-mono text-blue-300 leading-relaxed overflow-x-auto border border-divider/5 shadow-inner">
-                                        {`{
-  "network": {
-    "ip": "192.168.1.104",
-    "gateway": "192.168.1.1",
-    "ssid": "Tnxt_Lab_2G"
-  },
-  "firmware": {
-    "version": "1.2.4-stable",
-    "build_date": "2024-01-15",
-    "hash": "b4f2c8d1"
-  },
-  "provisioning": {
-    "status": "active",
-    "token_expires": null
-  }
-}`}
-                                    </pre>
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="outline" className="btn-sm"><Settings size={14} /> Edit JSON</Button>
-                                        <Button variant="primary" className="btn-sm">Push Config</Button>
-                                    </div>
-                                </div>
-                            </Card>
-
-                            <Card>
-                                <h3 className="section-title">Security & Tokens</h3>
-                                <div className="space-y-4">
-                                    <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
-                                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-2">Device Token (Sensitive)</p>
-                                        <div className="flex items-center gap-2">
-                                            <code className="flex-1 bg-black/30 p-2 rounded text-[10px] font-mono truncate">{device.device_token || 'TOKEN_NOT_ASSIGNED'}</code>
-                                            <Button variant="outline" className="btn-sm px-2"><RefreshCw size={12} /></Button>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
+                                            {widgets.map((w, idx) => (
+                                                <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '1.25rem', border: '1px solid var(--border-dim)', transition: 'all 0.3s ease' }} className="hover-lift group">
+                                                    <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+                                                        <div style={{ 
+                                                            width: '3rem', 
+                                                            height: '3rem', 
+                                                            borderRadius: '0.75rem', 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            justifyContent: 'center', 
+                                                            border: '1px solid rgba(255, 255, 255, 0.05)',
+                                                            background: w.type === 'led' ? 'rgba(168, 85, 247, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                                                            color: w.type === 'led' ? '#a855f7' : 'var(--primary)'
+                                                        }}>
+                                                            {w.type === 'led' ? <Zap size={20} /> : <Activity size={20} />}
+                                                        </div>
+                                                        <Button isIconOnly variant="light" size="sm" style={{ opacity: 0, transition: 'opacity 0.2s' }} className="group-hover:opacity-100"><MoreHorizontal size={16}/></Button>
+                                                    </div>
+                                                    <h5 style={{ fontSize: '0.875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{w.label || w.type}</h5>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                                        <Chip size="sm" variant="flat" style={{ height: '1.25rem', fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', background: 'rgba(255, 255, 255, 0.03)', border: 'none' }}>{w.type}</Chip>
+                                                        <span style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--text-dim)', opacity: 0.5 }}>PIN_{w.config?.virtual_pin?.toUpperCase()}</span>
+                                                    </div>
+                                                    <Divider style={{ margin: '1rem 0', opacity: 0.05 }} />
+                                                    <div className="flex-between">
+                                                        <span className="text-tactical" style={{ fontSize: '8px', opacity: 0.4 }}>Current Amplitude</span>
+                                                        <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 800, color: 'var(--primary)' }}>{w.value ?? 'INERT'}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {widgets.length === 0 && (
+                                                <div style={{ gridColumn: 'span 2', padding: '5rem 0', textAlign: 'center', border: '1px dashed var(--border-dim)', borderRadius: '2rem', opacity: 0.2 }}>
+                                                    <Layout size={40} style={{ margin: '0 auto 1rem' }} />
+                                                    <p className="text-tactical" style={{ fontSize: '10px' }}>Zero Functional Widgets Detected</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            </Card>
-                        </div>
-                    )}
+                            </div>
+                        </Tab>
 
-                    {activeTab === 'logs' && (
-                        <Card className="h-[600px] flex flex-col">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="section-title mb-0">Device Event Stream</h3>
-                                <div className="flex gap-2">
-                                    <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">CONNECTED</span>
-                                    <Button variant="outline" className="btn-sm px-2" onClick={handleRefreshTelemetry}><RefreshCw size={12} /></Button>
-                                    <Button variant="outline" className="btn-sm px-2"><Trash2 size={12} /></Button>
+                        <Tab
+                            key="telemetry"
+                            title={
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Signal size={14}/>
+                                    <span>Signal Telemetry</span>
+                                </div>
+                            }
+                        >
+                            <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                <div className="elite-card" style={{ padding: '2rem', background: 'rgba(255, 255, 255, 0.01)' }}>
+                                    <h4 className="text-tactical" style={{ textAlign: 'center', marginBottom: '2.5rem', fontSize: '11px' }}>Live Telemetry Snapshot</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem' }}>
+                                        {telemetry?.data ? Object.entries(telemetry.data).map(([key, val]) => (
+                                            <div key={key} style={{ textAlign: 'center' }}>
+                                                <p className="text-tactical" style={{ fontSize: '8px', marginBottom: '0.5rem', opacity: 0.4 }}>{key}</p>
+                                                <p style={{ fontSize: '2rem', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-0.04em', color: 'var(--primary)', margin: 0 }}>{typeof val === 'number' ? val.toFixed(1) : val}</p>
+                                                <Progress value={75} size="sm" color="primary" style={{ marginTop: '1rem', height: '3px' }} />
+                                            </div>
+                                        )) : (
+                                            <div style={{ gridColumn: 'span 4', padding: '5rem 0', textAlign: 'center', opacity: 0.1 }}>
+                                                <Signal size={40} style={{ margin: '0 auto 1rem' }} />
+                                                <p className="text-tactical" style={{ fontSize: '10px' }}>Waiting for incoming signal pulse...</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="elite-card" style={{ background: 'rgba(2, 6, 23, 0.6)' }}>
+                                    <div className="elite-card-body" style={{ padding: '2rem' }}>
+                                        <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <Terminal size={18} style={{ opacity: 0.4 }} />
+                                                <h4 className="text-tactical" style={{ fontSize: '9px', opacity: 0.4 }}>Asynchronous Logic Log</h4>
+                                            </div>
+                                            <Button isIconOnly variant="flat" size="sm" style={{ height: '2rem', width: '2rem', background: 'rgba(255, 255, 255, 0.03)' }} onPress={handleRefreshTelemetry}><RefreshCw size={14}/></Button>
+                                        </div>
+                                        <div style={{ 
+                                            background: 'rgba(0, 0, 0, 0.4)', 
+                                            borderRadius: '1.25rem', 
+                                            padding: '1.5rem', 
+                                            fontFamily: 'monospace', 
+                                            fontSize: '11px', 
+                                            color: '#60a5fa', 
+                                            height: '300px', 
+                                            overflowY: 'auto', 
+                                            border: '1px solid rgba(255, 255, 255, 0.03)',
+                                            boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.2)'
+                                        }}>
+                                            <p style={{ opacity: 0.4 }}>[{new Date().toLocaleTimeString()}] TRACE: Initializing telemetry hook...</p>
+                                            <p style={{ color: 'var(--success)' }}>[{new Date().toLocaleTimeString()}] SUCCESS: Authenticated node 0x{id.slice(-6)}</p>
+                                            {telemetry ? (
+                                                <pre style={{ color: '#a78bfa', marginTop: '1rem', whiteSpace: 'pre-wrap', margin: 0 }}>{JSON.stringify(telemetry, null, 2)}</pre>
+                                            ) : (
+                                                <p style={{ fontStyle: 'italic', opacity: 0.3, marginTop: '1rem' }}>// Standby for nodal pulse data stream...</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex-1 bg-black/60 rounded-lg p-4 font-mono text-[10px] text-gray-400 overflow-y-auto space-y-1 shadow-inner border border-divider/5">
-                                <p><span className="text-gray-600">[{device.last_active ? new Date(device.last_active).toLocaleTimeString() : 'N/A'}]</span> <span className="text-green-500">SYSTEM</span>: Device sync complete.</p>
-                                <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-blue-400">ADMIN</span>: Accessing telemetry stream...</p>
-                                {telemetry?.timestamp && (
-                                    <p><span className="text-gray-600">[{new Date(telemetry.timestamp).toLocaleTimeString()}]</span> <span className="text-purple-400">DATA</span>: Received telemetry: {JSON.stringify(telemetry.data)}</p>
-                                )}
-                                {!telemetry?.timestamp && (
-                                    <p className="text-yellow-500/50 italic py-2">No telemetry events recorded recently.</p>
-                                )}
+                        </Tab>
+
+                        <Tab
+                            key="system"
+                            title={
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Database size={14}/>
+                                    <span>Nodal Schema</span>
+                                </div>
+                            }
+                        >
+                            <div style={{ marginTop: '2rem' }}>
+                                <div className="elite-card" style={{ padding: '2.5rem', background: 'rgba(255, 255, 255, 0.01)' }}>
+                                    <h4 className="text-tactical" style={{ marginBottom: '2.5rem', fontSize: '12px' }}>Hardware Topology</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                            <div className="flex-between" style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                                <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4, fontStyle: 'italic' }}>Protocol Version</span>
+                                                <span style={{ fontSize: '0.875rem', fontWeight: 900 }}>v5.2.4-STABLE</span>
+                                            </div>
+                                            <div className="flex-between" style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                                <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4, fontStyle: 'italic' }}>Encryption Layer</span>
+                                                <Chip size="sm" variant="flat" style={{ fontSize: '8px', fontWeight: 900, background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', border: 'none' }}>AES_256_GCM</Chip>
+                                            </div>
+                                            <div className="flex-between" style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                                <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4, fontStyle: 'italic' }}>Signal Cluster</span>
+                                                <span style={{ fontSize: '0.875rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>EU_NORTH_08</span>
+                                            </div>
+                                        </div>
+                                        <div style={{ padding: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '1.5rem', border: '1px solid var(--border-dim)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <Shield size={16} style={{ color: 'var(--primary)' }} />
+                                                <span className="text-tactical" style={{ fontSize: '10px' }}>Identity Perimeter</span>
+                                            </div>
+                                            <Divider style={{ opacity: 0.05 }} />
+                                            <div>
+                                                <p className="text-tactical" style={{ fontSize: '7px', opacity: 0.4, marginBottom: '0.75rem' }}>Private Secure Token</p>
+                                                <div style={{ background: '#020617', padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1px solid var(--border-dim)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="group">
+                                                    <span style={{ fontFamily: 'monospace', fontSize: '10px', opacity: 0.3, letterSpacing: '0.2rem' }}>●●●●●●●●●●●●●●●●●●●</span>
+                                                    <Button isIconOnly variant="light" size="sm" style={{ height: '1.5rem', width: '1.5rem' }}><Settings size={12}/></Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                                        <Button variant="flat" style={{ fontWeight: 800, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.05em' }} startContent={<RefreshCw size={14}/>}>Rotate Credentials</Button>
+                                        <Button color="primary" style={{ fontWeight: 800, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.05em', height: '2.5rem' }} startContent={<RefreshCw size={14}/>}>Force Provisioning</Button>
+                                    </div>
+                                </div>
                             </div>
-                        </Card>
-                    )}
+                        </Tab>
+                    </Tabs>
                 </div>
 
-                <div className="lg:col-span-1 space-y-6">
-                    <Card>
-                        <h3 className="section-title">Administrative Context</h3>
-                        <div className="space-y-4">
-                            <div className="p-3 bg-content2/5 rounded-xl border border-divider/5">
-                                <p className="text-[10px] text-dim uppercase tracking-widest font-bold mb-3">Assigned Owner</p>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold border border-blue-500/20">
-                                        {device.owner_name?.charAt(0).toUpperCase() || 'U'}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-foreground">{device.owner_name || 'System / Unassigned'}</p>
-                                        <p className="text-[10px] text-dim font-mono">{device.owner_email || 'No email associated'}</p>
+                {/* Sidebar Info */}
+                <div className="lg:col-span-4 flex flex-col gap-8">
+                    <div className="elite-card" style={{ padding: '2rem', background: 'rgba(255, 255, 255, 0.01)' }}>
+                        <h4 className="text-tactical" style={{ marginBottom: '2.5rem', fontSize: '12px' }}>Administrative Context</h4>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                            <div>
+                                <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.4, marginBottom: '1rem', fontStyle: 'italic' }}>Nodal Principal</p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '1.5rem', border: '1px solid var(--border-dim)', cursor: 'pointer', transition: 'all 0.3s ease' }} className="hover-lift">
+                                    <Avatar 
+                                        src={`https://i.pravatar.cc/150?u=${device.user_id}`} 
+                                        style={{ height: '3rem', width: '3rem', border: '1px solid var(--border-dim)' }}
+                                    />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{ fontSize: '0.875rem', fontWeight: 900, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.owner_name || 'Anonymous Principal'}</p>
+                                        <p style={{ fontSize: '9px', fontFamily: 'monospace', opacity: 0.3, letterSpacing: '-0.2px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.owner_email || 'HIDDEN_VECTOR'}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex justify-between items-center px-1">
-                                <span className="text-[10px] text-dim uppercase font-bold tracking-tighter">Owner UUID</span>
-                                <span className="text-[10px] text-dim font-mono bg-content2/5 px-2 py-0.5 rounded">{device.user_id}</span>
-                            </div>
-                            <div className="flex justify-between items-center px-1">
-                                <span className="text-[10px] text-dim uppercase font-bold tracking-tighter">Registration</span>
-                                <span className="text-[10px] text-dim font-mono italic">Jan 30 2026</span>
-                            </div>
-                        </div>
-                    </Card>
 
-                    <Card>
-                        <h3 className="section-title">Telemetry Snapshot</h3>
-                        <div className="space-y-4">
-                            {telemetry?.data && Object.keys(telemetry.data).length > 0 ? Object.entries(telemetry.data).map(([key, val]) => (
-                                <div key={key} className="flex justify-between items-center">
-                                    <span className="text-xs text-dim capitalize">{key}</span>
-                                    <span className="text-sm font-bold font-mono">{typeof val === 'number' ? val.toFixed(2) : String(val)}</span>
+                            <Divider style={{ opacity: 0.05 }} />
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                <div className="flex-between">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)' }}>
+                                            <Globe size={16} />
+                                        </div>
+                                        <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4 }}>Global Reach</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 900 }}>99.8%</span>
                                 </div>
-                            )) : (
-                                <p className="text-[10px] text-dim italic text-center py-4">Wait for data...</p>
-                            )}
-                        </div>
-                    </Card>
 
-                    <Card>
-                        <h3 className="section-title">Administrator Tools</h3>
-                        <div className="space-y-2">
-                            <Button variant="outline" className="w-full justify-start text-xs h-9" onClick={handleRefreshTelemetry}>
-                                <RefreshCw size={14} /> Force Sync
-                            </Button>
-                            <Button variant="outline" className="w-full justify-start text-xs h-9">
-                                <Code size={14} /> View RAW Schema
-                            </Button>
-                            <div className="pt-4 mt-2 border-t border-divider/5">
-                                <Button variant="danger" className="w-full justify-start text-xs h-9 bg-red-500/5 hover:bg-red-500/20 text-red-400 border-red-500/20">
-                                    <Trash2 size={14} /> Wipe Remote Data
-                                </Button>
+                                <div className="flex-between">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
+                                            <Shield size={16} />
+                                        </div>
+                                        <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4 }}>Integrity Shift</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--success)' }}>+12%</span>
+                                </div>
+
+                                <div className="flex-between">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(249, 115, 22, 0.1)', color: '#f97316' }}>
+                                            <Clock size={16} />
+                                        </div>
+                                        <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4 }}>Pulse Latency</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 900 }}>44ms</span>
+                                </div>
+                            </div>
+
+                            <Divider style={{ opacity: 0.05 }} />
+
+                            <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.04)', borderRadius: '1.5rem', border: '1px dashed rgba(59, 130, 246, 0.2)' }}>
+                                <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.5, fontStyle: 'italic', lineHeight: 1.6, textAlign: 'center', margin: 0 }}>
+                                    This asset is currently part of the global monitoring cluster. All interactions are securely logged in the administrative audit vault.
+                                </p>
                             </div>
                         </div>
-                    </Card>
+                    </div>
 
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-divider/5">
-                        <p className="text-[10px] text-gray-500 text-center leading-relaxed">
-                            Remember: Administrative actions are logged for security.
-                            Ensure you have owner permission before modifying live device payloads.
-                        </p>
+                    <div className="elite-card group" style={{ padding: '2rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(15, 23, 42, 0) 50%, rgba(59, 130, 246, 0.1) 100%)', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', right: '-1rem', top: '-1rem', opacity: 0.05, transition: 'transform 0.7s ease' }} className="group-hover:scale-110">
+                            <Cpu size={120} />
+                        </div>
+                        <h4 className="text-tactical" style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>Provisioning State</h4>
+                        <div style={{ position: 'relative', zIndex: 1 }}>
+                            <div className="flex-between" style={{ marginBottom: '1rem' }}>
+                                <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4 }}>Vector Capacity</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 900 }}>84%</span>
+                            </div>
+                            <Progress value={84} size="md" color="primary" style={{ height: '4px' }} />
+                            <p className="text-dim" style={{ fontSize: '9px', marginTop: '1.5rem', fontStyle: 'italic', fontWeight: 500 }}>Synchronizing assets with neural cloud infrastructure...</p>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <Card className="mt-8">
-                <h3 className="section-title">Raw Telemetry Dump</h3>
-                <pre className="p-4 bg-black/40 rounded text-[10px] font-mono text-green-500 overflow-x-auto">
-                    {JSON.stringify(telemetry || { message: "No data" }, null, 2)}
-                </pre>
-            </Card>
-        </div>
+        </PageShell>
     );
 }

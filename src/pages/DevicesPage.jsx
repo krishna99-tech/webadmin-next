@@ -1,30 +1,179 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useIoT } from '../context/IoTContext';
 import { useToast } from '../context/ToastContext';
-import DeviceManager from '../components/IoTConsole/DeviceManager';
-import Modals from '../components/IoTConsole/Modals';
-import Button from '../components/UI/Button';
-import ConfirmModal from '../components/UI/ConfirmModal';
-import Select from '../components/UI/Select';
-import EmptyState from '../components/UI/EmptyState';
+import Modals from '../components/Modals';
 import adminService from '../services/adminService';
+import {
+    Button,
+    Input,
+    Select,
+    SelectItem,
+    Tabs,
+    Tab,
+    Chip,
+    Tooltip,
+    Divider,
+    Modal,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter
+} from '@heroui/react';
 import {
     Smartphone,
     Download,
     RefreshCw,
     Plus,
-    X,
     Search,
-    ArrowUpDown,
-    Server,
+    Filter,
+    Thermometer,
+    Zap,
+    AlertCircle,
+    MapPin,
+    Signal,
+    Battery,
+    Clock,
+    Users,
+    MoreVertical,
+    Edit,
+    Trash2,
+    Shield,
+    ExternalLink,
+    Cpu,
+    Network
 } from 'lucide-react';
+import ConfirmModal from '../components/UI/ConfirmModal';
+import { useNavigate } from 'react-router-dom';
+import PageHeader from '../components/Layout/PageHeader';
+import PageShell from '../components/Layout/PageShell';
 
+/* ===============================
+   TACTICAL NODE CARD
+================================ */
+const NodeCard = ({ device, onAction, onEdit, onTransfer, onDetails }) => {
+    const getStatusColor = (status) => {
+        switch(status) {
+            case 'online': return 'text-emerald-500';
+            case 'offline': return 'text-red-500';
+            case 'warning': return 'text-amber-500';
+            default: return 'text-slate-400';
+        }
+    };
+
+    const getStatusBg = (status) => {
+        switch(status) {
+            case 'online': return 'bg-emerald-500/10 border-emerald-500/20';
+            case 'offline': return 'bg-red-500/10 border-red-500/20';
+            case 'warning': return 'bg-amber-500/10 border-amber-500/20';
+            default: return 'bg-slate-500/10 border-slate-500/20';
+        }
+    };
+
+    const getTypeIcon = (type) => {
+        switch(type?.toLowerCase()) {
+            case 'sensor': return <Thermometer size={20} />;
+            case 'actuator': return <Zap size={20} />;
+            case 'gateway': return <Network size={20} />;
+            default: return <Cpu size={20} />;
+        }
+    };
+
+    return (
+        <div 
+            className="elite-card elite-card-interactive" 
+            style={{ 
+                background: 'rgba(255, 255, 255, 0.01)', 
+                border: '1px solid rgba(255,255,255,0.05)',
+                padding: '1.5rem'
+            }}
+        >
+            {/* Header Identity */}
+            <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-4">
+                    <div style={{ 
+                        width: '3.5rem', 
+                        height: '3.5rem', 
+                        borderRadius: '1.25rem', 
+                        background: 'rgba(255,255,255,0.02)', 
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        color: 'var(--primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
+                    }}>
+                        {getTypeIcon(device.type)}
+                    </div>
+                    <div>
+                        <h4 style={{ fontSize: '1.125rem', fontWeight: 900, margin: 0, fontStyle: 'italic', color: 'var(--text-main)' }}>{device.name}</h4>
+                        <div className="flex items-center gap-3 mt-1">
+                             <p className="text-tactical flex items-center gap-1" style={{ fontSize: '8px', opacity: 0.4 }}>
+                                <MapPin size={10} /> {device.location || 'DEEP_SPACE'}
+                             </p>
+                             <Divider orientation="vertical" style={{ height: '0.5rem', opacity: 0.1 }} />
+                             <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.4 }}>{device.id?.slice(-8).toUpperCase()}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className={`status-pill ${getStatusBg(device.status)}`} style={{ padding: '0.5rem 1rem' }}>
+                    <div className={`status-dot ${device.status === 'online' ? 'status-dot-on' : 'status-dot-off'}`} style={{ width: '4px', height: '4px' }} />
+                    <span className={`text-tactical ${getStatusColor(device.status)}`} style={{ fontSize: '9px', fontWeight: 900 }}>{device.status.toUpperCase()}</span>
+                </div>
+            </div>
+
+            {/* Tactical Telemetry */}
+            <div className="grid grid-cols-3 gap-4 p-4 bg-white/[0.01] rounded-2xl border border-white/[0.03] mb-6">
+                 <div style={{ textAlign: 'center' }}>
+                     <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.3, marginBottom: '2px' }}>SIGNAL</p>
+                     <div className="flex items-center justify-center gap-1">
+                         <Signal size={10} className="text-primary" />
+                         <span style={{ fontSize: '13px', fontWeight: 900 }}>98%</span>
+                     </div>
+                 </div>
+                 <div style={{ textAlign: 'center' }}>
+                     <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.3, marginBottom: '2px' }}>BATTERY</p>
+                     <div className="flex items-center justify-center gap-1">
+                         <Battery size={10} className="text-success" />
+                         <span style={{ fontSize: '13px', fontWeight: 900 }}>87%</span>
+                     </div>
+                 </div>
+                 <div style={{ textAlign: 'center' }}>
+                     <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.3, marginBottom: '2px' }}>LAST_PULSE</p>
+                     <div className="flex items-center justify-center gap-1">
+                         <Clock size={10} style={{ opacity: 0.4 }} />
+                         <span style={{ fontSize: '11px', fontWeight: 800, opacity: 0.6 }}>JUST_NOW</span>
+                     </div>
+                 </div>
+            </div>
+
+            {/* Governance Actions */}
+            <div className="flex items-center gap-3">
+                <Button 
+                    variant="flat" 
+                    onPress={onDetails}
+                    style={{ flex: 1, height: '2.75rem', borderRadius: '0.875rem', fontWeight: 800, fontSize: '10px', textTransform: 'uppercase', background: 'rgba(255,255,255,0.03)' }}
+                >
+                    Diagnostic
+                </Button>
+                <Divider orientation="vertical" style={{ height: '1.5rem', opacity: 0.1 }} />
+                <div className="flex gap-2">
+                    <Tooltip content="Edit Infrastructure"><Button isIconOnly variant="flat" onPress={onEdit} style={{ borderRadius: '0.75rem', width: '2.5rem', height: '2.5rem', background: 'rgba(255,255,255,0.03)' }}><Edit size={16} /></Button></Tooltip>
+                    <Tooltip content="Transfer Control"><Button isIconOnly variant="flat" onPress={onTransfer} style={{ borderRadius: '0.75rem', width: '2.5rem', height: '2.5rem', background: 'rgba(255,255,255,0.03)', color: 'var(--primary)' }}><Users size={16} /></Button></Tooltip>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/* ===============================
+   HARDWARE FLEET PORTAL
+================================ */
 export default function DevicesPage() {
+    const navigate = useNavigate();
     const {
         devices = [],
         users = [],
         loading,
-        error,
         fetchDevices,
         fetchUsers,
         createDevice,
@@ -32,6 +181,7 @@ export default function DevicesPage() {
         deleteDevice,
         controlDevice,
         transferDeviceOwnership,
+        error,
         clearError,
     } = useIoT();
 
@@ -45,7 +195,6 @@ export default function DevicesPage() {
     const [transferLoading, setTransferLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('name');
-    const [sortOrder, setSortOrder] = useState('asc');
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [optimisticUpdates, setOptimisticUpdates] = useState({});
@@ -67,21 +216,6 @@ export default function DevicesPage() {
         try {
             if (action === 'delete') {
                 setConfirmDelete(device);
-            } else if (action === 'toggle') {
-                const newStatus = device.status === 'online' ? 'offline' : 'online';
-                setOptimisticUpdates(prev => ({ ...prev, [id]: { status: newStatus } }));
-
-                try {
-                    await controlDevice(id, 'toggle_power', { status: newStatus });
-                    toast.success(`Device ${newStatus}`);
-                } catch (err) {
-                    setOptimisticUpdates(prev => {
-                        const next = { ...prev };
-                        delete next[id];
-                        return next;
-                    });
-                    throw err;
-                }
             } else if (action === 'transfer') {
                 setTransferDevice(device);
                 setShowTransferModal(true);
@@ -113,26 +247,26 @@ export default function DevicesPage() {
     const handleExport = async () => {
         try {
             const { data } = await adminService.exportDevices();
-            const headers = ['ID', 'Name', 'Status', 'Last Active', 'User ID', 'Owner'];
-            const rows = data.map(d => [
-                d.id,
-                d.name,
-                d.status,
-                d.last_active || '',
-                d.user_id || '',
-                d.owner_name || '',
-            ]);
-            const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+            const csvData = data.map(d => ({
+                ID: d.id,
+                Name: d.name,
+                Status: d.status,
+                Last_Active: d.last_active,
+                Owner: d.owner_name
+            }));
+            const headers = Object.keys(csvData[0]);
+            const rows = csvData.map(row => headers.map(h => `"${row[h] || ''}"`).join(','));
+            const csv = [headers.join(','), ...rows].join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `devices_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.download = `hardware_fleet_audit_${new Date().toISOString().slice(0, 10)}.csv`;
             a.click();
             URL.revokeObjectURL(url);
-            toast.success('Export completed');
+            toast.success('Fleet data exported');
         } catch (err) {
-            toast.error('Export failed');
+            toast.error('Export protocol failure');
         }
     };
 
@@ -141,15 +275,15 @@ export default function DevicesPage() {
             const id = selectedDevice?.id || selectedDevice?._id;
             if (id) {
                 await updateDevice(id, formData);
-                toast.success('Device updated');
+                toast.success('Infrastructure updated');
             } else {
                 await createDevice(formData);
-                toast.success('Device registered');
+                toast.success('Asset registered');
             }
             setShowModal(false);
             setSelectedDevice(null);
         } catch (err) {
-            toast.error(err?.response?.data?.detail || err.message || 'Operation failed');
+            toast.error(err?.response?.data?.detail || err.message || 'Protocol failure');
             throw err;
         }
     };
@@ -159,10 +293,10 @@ export default function DevicesPage() {
         setDeleteLoading(true);
         try {
             await deleteDevice(confirmDelete.id || confirmDelete._id);
-            toast.success('Device removed successfully');
+            toast.success('Asset decommissioned');
             setConfirmDelete(null);
         } catch (err) {
-            toast.error(err?.response?.data?.detail || err.message || 'Operation failed');
+            toast.error(err?.response?.data?.detail || err.message || 'Decommission failure');
         } finally {
             setDeleteLoading(false);
         }
@@ -170,12 +304,7 @@ export default function DevicesPage() {
 
     const displayDevices = useMemo(() => {
         if (!devices) return [];
-        const effectiveDevices = devices.map(d => {
-            const id = d.id || d._id;
-            return optimisticUpdates[id] ? { ...d, ...optimisticUpdates[id] } : d;
-        });
-
-        let list = effectiveDevices.filter(d => {
+        let list = [...devices].filter(d => {
             if (activeFleetTab === 'active') return d.status === 'online';
             if (activeFleetTab === 'orphaned') return !d.user_id || d.owner_name?.includes('Orphaned');
             return true;
@@ -188,146 +317,122 @@ export default function DevicesPage() {
                 (d.location || '').toLowerCase().includes(q)
             );
         }
-        const statusOrder = { online: 0, warning: 1, offline: 2 };
-        list = [...list].sort((a, b) => {
-            if (sortBy === 'name') {
-                const na = (a.name || '').toLowerCase();
-                const nb = (b.name || '').toLowerCase();
-                return sortOrder === 'asc' ? na.localeCompare(nb) : nb.localeCompare(na);
-            }
-            if (sortBy === 'status') {
-                const sa = statusOrder[a.status] ?? 3;
-                const sb = statusOrder[b.status] ?? 3;
-                return sortOrder === 'asc' ? sa - sb : sb - sa;
-            }
-            if (sortBy === 'last_active') {
-                const ta = new Date(a.last_active || 0).getTime();
-                const tb = new Date(b.last_active || 0).getTime();
-                return sortOrder === 'asc' ? ta - tb : tb - ta;
-            }
-            return 0;
-        });
-        return list;
-    }, [devices, activeFleetTab, searchQuery, sortBy, sortOrder, optimisticUpdates]);
+        return list.sort((a, b) => (a[sortBy] || '').localeCompare(b[sortBy] || ''));
+    }, [devices, activeFleetTab, searchQuery, sortBy]);
 
     return (
-        <div className="devices-page animate-fadeInUp">
-            <div className="page-header mb-8">
-                <div>
-                    <h2 className="page-title flex items-center gap-3">
-                        <Smartphone className="icon-glow text-primary" size={28} />
-                        Device Fleet
-                    </h2>
-                    <p className="dashboard-subtitle mt-1">
-                        Manage IoT devices, sensors, and edge nodes
-                    </p>
-                </div>
-                <div className="flex gap-3">
-                    <Button onClick={handleExport} variant="outline">
-                        <Download size={18} />
-                        Export
-                    </Button>
-                    <Button onClick={fetchDevices} disabled={loading} variant="secondary">
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                        Refresh
-                    </Button>
-                    <Button onClick={() => { setSelectedDevice(null); setShowModal(true); }} className="btn-glow px-6">
-                        <Plus size={18} />
-                        Add Device
-                    </Button>
-                </div>
-            </div>
-
-            {/* Search & Sort */}
-            <div className="action-bar mb-6 flex flex-wrap items-center gap-4">
-                <div className="flex-1 min-w-[200px] max-w-md relative">
-                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
-                    <input
-                        type="text"
-                        placeholder="Search by name, type, location…"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="input-field input-glow w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-divider/5 bg-content2/5 focus:border-blue-500/50"
-                    />
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-dim">Sort</span>
-                    <Select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="input-field py-2.5 pl-3 pr-8 text-sm rounded-xl border border-divider/5 bg-content2/5 focus:border-blue-500/50"
-                        options={[
-                            { value: 'name', label: 'Name' },
-                            { value: 'status', label: 'Status' },
-                            { value: 'last_active', label: 'Last Active' },
-                        ]}
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
-                        className="p-2.5 rounded-xl border border-divider/5 bg-content2/5 hover:bg-content2/10 transition-colors btn-press"
-                        title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                    >
-                        <ArrowUpDown size={18} className="text-dim" />
-                    </button>
-                </div>
-            </div>
-
-            {users.length > 0 && (
-                <div className="flex gap-2 mb-6 p-1.5 bg-content2/5 rounded-2xl w-fit border border-divider/5">
-                    {[
-                        { id: 'total', label: 'All', count: devices.length },
-                        { id: 'active', label: 'Online', count: devices.filter(d => d.status === 'online').length },
-                        { id: 'orphaned', label: 'Unassigned', count: devices.filter(d => !d.user_id || d.owner_name?.includes('Orphaned')).length },
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveFleetTab(tab.id)}
-                            className={`px-6 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-3 ${activeFleetTab === tab.id ? 'bg-blue-500 text-foreground shadow-primary' : 'hover:bg-content2/5 text-dim'}`}
+        <PageShell>
+            <PageHeader
+                icon={Smartphone}
+                title="Hardware Registry"
+                subtitle="Operational orchestration of all administrative edge nodes and sensors."
+                actions={
+                    <div className="flex items-center gap-3">
+                        <Button 
+                            variant="flat" 
+                            onPress={handleExport}
+                            startContent={<Download size={18} />}
+                            style={{ height: '3.25rem', borderRadius: '1.25rem', fontWeight: 800, textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.1em', padding: '0 1.5rem', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)' }}
                         >
-                            {tab.label}
-                            <span className={`px-2 py-0.5 rounded-lg text-[10px] ${activeFleetTab === tab.id ? 'bg-content2/20' : 'bg-content2/10'}`}>
-                                {tab.count}
-                            </span>
-                        </button>
+                            Export Audit
+                        </Button>
+                        <Button 
+                            color="primary" 
+                            onPress={() => { setSelectedDevice(null); setShowModal(true); }}
+                            startContent={<Plus size={20} />}
+                            style={{ height: '3.25rem', borderRadius: '1.25rem', fontWeight: 950, textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.15em', padding: '0 2rem', boxShadow: '0 15px 30px rgba(59, 130, 246, 0.2)' }}
+                        >
+                            Register Node
+                        </Button>
+                    </div>
+                }
+            />
+
+            {/* Tactical Control Bar */}
+            <div className="elite-card" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <div className="elite-card-body flex items-center gap-8 px-7 py-3">
+                    <Tabs 
+                        selectedKey={activeFleetTab} 
+                        onSelectionChange={setActiveFleetTab}
+                        variant="underlined"
+                        classNames={{
+                            cursor: "bg-blue-500",
+                            tab: "h-12 font-black text-[10px] uppercase tracking-[0.15em]",
+                            tabContent: "group-data-[selected=true]:text-blue-500 opacity-40 group-data-[selected=true]:opacity-100"
+                        }}
+                    >
+                         <Tab key="total" title="Fleet Registry" />
+                         <Tab key="active" title="Operational" />
+                         <Tab key="orphaned" title="Unassigned" />
+                    </Tabs>
+
+                    <div style={{ flex: 1 }}>
+                        <Input
+                            placeholder="Filter nodes via deep telemetry..."
+                            startContent={<Search size={16} style={{ opacity: 0.3 }} />}
+                            value={searchQuery}
+                            onValueChange={setSearchQuery}
+                            variant="bordered"
+                            classNames={{
+                                inputWrapper: "h-12 border-white/[0.05] bg-white/[0.01] rounded-1.25rem",
+                                input: "text-sm font-medium",
+                            }}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <Select 
+                            size="sm"
+                            selectedKeys={[sortBy]}
+                            onSelectionChange={(keys) => setSortBy(Array.from(keys)[0])}
+                            variant="bordered"
+                            className="w-40"
+                            classNames={{
+                                trigger: "h-12 border-white/[0.05] bg-white/[0.01] rounded-1.25rem",
+                                value: "text-tactical font-black text-[9px] uppercase tracking-widest text-blue-500"
+                            }}
+                        >
+                            <SelectItem key="name">Sort: Name</SelectItem>
+                            <SelectItem key="status">Sort: Status</SelectItem>
+                            <SelectItem key="last_active">Sort: Pulse</SelectItem>
+                        </Select>
+                        <Button isIconOnly variant="flat" onPress={fetchDevices} isLoading={loading} style={{ width: '3rem', height: '3rem', borderRadius: '1rem', background: 'rgba(255,255,255,0.03)' }}><RefreshCw size={18} /></Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Node Grid Visualization */}
+            {loading && !devices.length ? (
+                <div style={{ padding: '10rem', textAlign: 'center' }}>
+                    <RefreshCw className="animate-spin text-primary" size={40} style={{ opacity: 0.4 }} />
+                </div>
+            ) : displayDevices.length === 0 ? (
+                <div className="elite-card" style={{ padding: '10rem', textAlign: 'center', opacity: 0.15 }}>
+                    <AlertCircle size={48} style={{ marginBottom: '1.5rem' }} />
+                    <p className="text-tactical" style={{ fontSize: '14px', letterSpacing: '0.2em' }}>NO_HARDWARE_RESOURCES_DETECTED</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {displayDevices.map(device => (
+                        <NodeCard 
+                            key={device.id || device._id}
+                            device={device}
+                            onAction={handleAction}
+                            onEdit={() => { setSelectedDevice(device); setShowModal(true); }}
+                            onTransfer={() => { setTransferDevice(device); setShowTransferModal(true); }}
+                            onDetails={() => navigate(`/devices/${device.id || device._id}`)}
+                        />
                     ))}
                 </div>
             )}
 
-            <div className="relative">
-                {loading && (!devices || devices.length === 0) && (
-                    <div className="absolute inset-0 z-10 bg-slate-900/10 backdrop-blur-[2px] flex items-center justify-center rounded-3xl min-h-[200px]">
-                        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
-                    </div>
-                )}
-                {displayDevices.length === 0 ? (
-                    <EmptyState
-                        icon={Server}
-                        title={searchQuery ? 'No devices match your search' : 'No devices yet'}
-                        description={searchQuery ? 'Try a different search or clear filters.' : 'Register your first device to get started.'}
-                        actionLabel={searchQuery ? undefined : 'Add Device'}
-                        onAction={searchQuery ? undefined : () => { setSelectedDevice(null); setShowModal(true); }}
-                        className="rounded-2xl"
-                    />
-                ) : (
-                    <DeviceManager
-                        devices={displayDevices}
-                        onAction={handleAction}
-                        onAddRequest={() => { setSelectedDevice(null); setShowModal(true); }}
-                        onEditRequest={(d) => { setSelectedDevice(d); setShowModal(true); }}
-                        onTransferRequest={(d) => { setTransferDevice(d); setShowTransferModal(true); }}
-                        showTransferButton={users.length > 0}
-                    />
-                )}
-            </div>
-
+            {/* Governance Modals */}
             <ConfirmModal
                 open={!!confirmDelete}
-                title="Remove device"
-                message={confirmDelete ? `Remove "${confirmDelete.name}" from the fleet permanently? This cannot be undone.` : ''}
+                title="Purge Node Infrastructure"
+                message={confirmDelete ? `Are you certain you wish to completely decommission hardware node "${confirmDelete.name}"? This action is irreversible and will purge all telemetry history.` : ''}
                 variant="danger"
-                confirmLabel="Remove"
-                cancelLabel="Cancel"
+                confirmLabel="Execute Purge"
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setConfirmDelete(null)}
                 loading={deleteLoading}
@@ -344,48 +449,75 @@ export default function DevicesPage() {
                 users={users}
             />
 
+            {/* Ownership Transfer Protocol */}
             {showTransferModal && transferDevice && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn p-4">
-                    <div className="card w-full max-w-sm p-6 border-purple-500/30">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-foreground">Transfer Ownership</h3>
-                            <button onClick={() => setShowTransferModal(false)} className="text-dim hover:text-foreground">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <div className="mb-6 p-4 bg-content2/5 rounded-xl border border-divider/5">
-                            <p className="text-[10px] text-dim uppercase mb-1">Device</p>
-                            <p className="text-sm font-bold text-foreground">{transferDevice.name}</p>
-                            <p className="text-[10px] text-dim font-mono">{transferDevice.id || transferDevice._id}</p>
-                        </div>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs text-dim uppercase tracking-wider mb-2">New Owner</label>
-                                <Select
-                                    className="input-field w-full"
-                                    value={transferUserId}
-                                    onChange={(e) => setTransferUserId(e.target.value)}
-                                    options={[
-                                        { value: '', label: 'Select user...' },
-                                        ...users.map(u => ({
-                                            value: u.id || u._id,
-                                            label: `${u.username} (${u.email || 'No email'})`
-                                        }))
-                                    ]}
-                                />
-                            </div>
-                            <div className="pt-4 flex gap-3">
-                                <Button variant="outline" className="flex-1" onClick={() => setShowTransferModal(false)}>
-                                    Cancel
-                                </Button>
-                                <Button className="flex-1 !bg-purple-600 shadow-lg" onClick={handleTransfer} loading={transferLoading}>
-                                    Confirm
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <Modal 
+                    isOpen={showTransferModal} 
+                    onClose={() => setShowTransferModal(false)}
+                    size="md"
+                    backdrop="blur"
+                    classNames={{
+                        base: "bg-slate-950/90 border border-white/[0.05] backdrop-blur-2xl shadow-2xl rounded-3xl",
+                    }}
+                >
+                    <ModalContent>
+                        {(onClose) => (
+                            <>
+                                <ModalHeader style={{ padding: '2.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                                        <div style={{ padding: '0.75rem', borderRadius: '1rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)' }}>
+                                            <Shield size={22} />
+                                        </div>
+                                        <div>
+                                            <h3 style={{ fontSize: '1.25rem', fontWeight: 950, margin: 0, textTransform: 'uppercase', fontStyle: 'italic' }}>Transfer Control</h3>
+                                            <p className="text-tactical" style={{ fontSize: '9px', opacity: 0.3, marginTop: '2px' }}>Identity Reassignment Protocol</p>
+                                        </div>
+                                    </div>
+                                </ModalHeader>
+                                <ModalBody style={{ padding: '0 2.5rem 2.5rem' }}>
+                                    <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.04)', border: '1px solid rgba(59, 130, 246, 0.1)', borderRadius: '1.25rem', marginBottom: '2rem' }}>
+                                        <p className="text-tactical" style={{ fontSize: '8px', color: 'var(--primary)', fontWeight: 900, marginBottom: '4px' }}>OPERATIONAL_ASSET</p>
+                                        <p style={{ fontSize: '1.125rem', fontWeight: 900, color: 'white', margin: 0 }}>{transferDevice.name}</p>
+                                    </div>
+
+                                    <Select
+                                        label="TARGET_PRINCIPAL"
+                                        placeholder="Select new identity..."
+                                        labelPlacement="outside"
+                                        variant="bordered"
+                                        selectedKeys={transferUserId ? [transferUserId] : []}
+                                        onSelectionChange={(keys) => setTransferUserId(Array.from(keys)[0])}
+                                        classNames={{
+                                            label: "text-tactical text-[9px] opacity-40 mb-3 tracking-[0.2em] font-black",
+                                            trigger: "h-14 border-white/[0.08] bg-white/[0.02] rounded-1.25rem",
+                                        }}
+                                    >
+                                        {users.map(u => (
+                                            <SelectItem key={u.id || u._id} textValue={u.username}>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontSize: '0.925rem', fontWeight: 800 }}>{u.username}</span>
+                                                    <span style={{ fontSize: '10px', opacity: 0.4 }}>{u.email}</span>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+                                </ModalBody>
+                                <ModalFooter style={{ padding: '2rem 2.5rem', gap: '1rem' }}>
+                                    <Button variant="flat" onPress={onClose} style={{ height: '3.5rem', borderRadius: '1rem', fontWeight: 800 }}>ABORT_PROTOCOL</Button>
+                                    <Button 
+                                        color="primary" 
+                                        onPress={handleTransfer} 
+                                        isLoading={transferLoading}
+                                        style={{ flex: 1, height: '3.5rem', borderRadius: '1rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                                    >
+                                        EXECUTE_TRANSFER
+                                    </Button>
+                                </ModalFooter>
+                            </>
+                        )}
+                    </ModalContent>
+                </Modal>
             )}
-        </div>
+        </PageShell>
     );
 }

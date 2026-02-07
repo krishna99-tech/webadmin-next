@@ -1,24 +1,32 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useIoT } from '../context/IoTContext';
 import { useToast } from '../context/ToastContext';
-import UserAccessControl from '../components/IoTConsole/UserAccessControl';
-import Modals from '../components/IoTConsole/Modals';
-import Button from '../components/UI/Button';
-import ConfirmModal from '../components/UI/ConfirmModal';
-import EmptyState from '../components/UI/EmptyState';
+import UserAccessControl from '../components/UserAccessControl';
+import Modals from '../components/Modals';
 import adminService from '../services/adminService';
+import {
+    Button,
+    Input,
+    Divider,
+} from '@heroui/react';
 import {
     Users as UsersIcon,
     Download,
     RefreshCw,
     Plus,
-    ShieldAlert,
     Search,
+    Shield,
+    Activity,
+    UserCheck,
+    AlertCircle
 } from 'lucide-react';
+import ConfirmModal from '../components/UI/ConfirmModal';
+import PageHeader from '../components/Layout/PageHeader';
+import PageShell from '../components/Layout/PageShell';
 
 export default function UsersPage() {
     const {
-        users,
+        users = [],
         loading,
         error,
         fetchUsers,
@@ -45,6 +53,13 @@ export default function UsersPage() {
             clearError();
         }
     }, [error, toast, clearError]);
+
+    const stats = useMemo(() => {
+        const total = users.length;
+        const active = users.filter(u => u.is_active).length;
+        const admins = users.filter(u => u.is_admin || u.role === 'Admin').length;
+        return { total, active, admins, suspended: total - active };
+    }, [users]);
 
     const filteredUsers = useMemo(() => {
         if (!searchQuery.trim()) return users;
@@ -132,85 +147,128 @@ export default function UsersPage() {
     };
 
     return (
-        <div className="users-page animate-fadeInUp">
-            <div className="page-header mb-8">
-                <div>
-                    <h2 className="page-title flex items-center gap-3">
-                        <UsersIcon className="icon-glow text-primary" size={28} />
-                        User Directory
-                    </h2>
-                    <p className="dashboard-subtitle mt-1">
-                        Manage identities and access permissions
-                    </p>
-                </div>
-                <div className="flex gap-3">
-                    <Button onClick={handleExport} variant="outline">
-                        <Download size={18} />
-                        Export
-                    </Button>
-                    <Button onClick={fetchUsers} disabled={loading} variant="secondary">
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                        Refresh
-                    </Button>
-                    <Button onClick={() => { setSelectedUser(null); setShowModal(true); }} className="btn-glow px-6">
-                        <Plus size={18} />
-                        Add User
-                    </Button>
-                </div>
-            </div>
-
-            {error && (
-                <div className="status-message status-error mb-6 border-red-500/20 bg-red-500/5 p-4 rounded-xl flex items-center gap-3">
-                    <ShieldAlert size={20} className="text-red-400" />
-                    <span className="text-xs font-medium text-red-200">{error}</span>
-                </div>
-            )}
-
-            <div className="action-bar mb-6">
-                <div className="flex-1 min-w-[200px] max-w-md relative">
-                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
-                    <input
-                        type="text"
-                        placeholder="Search by username, email, name…"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="input-field input-glow w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-divider/5 bg-content2/5 focus:border-blue-500/50"
-                    />
-                </div>
-            </div>
-
-            <div className="relative">
-                {loading && users.length === 0 && (
-                    <div className="absolute inset-0 z-10 bg-slate-900/10 backdrop-blur-[2px] flex items-center justify-center rounded-3xl min-h-[200px]">
-                        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+        <PageShell>
+            <PageHeader
+                icon={UsersIcon}
+                title="Identity Context"
+                subtitle="Secure orchestration of all administrative principals and security identities."
+                actions={
+                    <div className="flex items-center gap-3">
+                        <Button 
+                            variant="flat" 
+                            onPress={handleExport}
+                            startContent={<Download size={18} />}
+                            style={{ height: '3.25rem', borderRadius: '1rem', fontWeight: 800, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-dim)', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.1em', padding: '0 1.5rem' }}
+                        >
+                            Export Directory
+                        </Button>
+                        <Button 
+                            color="primary" 
+                            onPress={() => { setSelectedUser(null); setShowModal(true); }}
+                            startContent={<Plus size={20} />}
+                            style={{ height: '3.25rem', borderRadius: '1rem', fontWeight: 900, boxShadow: '0 15px 30px rgba(59, 130, 246, 0.25)', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.15em', padding: '0 2rem' }}
+                        >
+                            Initialize Identity
+                        </Button>
                     </div>
-                )}
-                {filteredUsers.length === 0 ? (
-                    <EmptyState
-                        icon={UsersIcon}
-                        title={searchQuery ? 'No users match your search' : 'No users yet'}
-                        description={searchQuery ? 'Try a different search.' : 'Onboard your first user to get started.'}
-                        actionLabel={searchQuery ? undefined : 'Add User'}
-                        onAction={searchQuery ? undefined : () => { setSelectedUser(null); setShowModal(true); }}
-                        className="rounded-2xl"
-                    />
-                ) : (
-                    <UserAccessControl
-                        users={filteredUsers}
-                        onAction={handleAction}
-                        onAddRequest={() => { setSelectedUser(null); setShowModal(true); }}
-                        onEditRequest={(u) => { setSelectedUser(u); setShowModal(true); }}
-                    />
-                )}
+                }
+            />
+
+            {/* Tactical Intelligence Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                    { label: 'Total Principals', value: stats.total, icon: UsersIcon, color: 'var(--primary)', trend: 'Nodes Registry' },
+                    { label: 'Authorized Sync', value: stats.active, icon: UserCheck, color: 'var(--success)', trend: 'Active Identity' },
+                    { label: 'Security Admin', value: stats.admins, icon: Shield, color: '#a855f7', trend: 'L3 Persistence' },
+                    { label: 'Access Suspended', value: stats.suspended, icon: AlertCircle, color: 'var(--danger)', trend: 'De-Auth State' }
+                ].map((stat, idx) => (
+                    <div key={idx} className="elite-card elite-card-interactive shadow-soft overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                        {/* Decorative Glow */}
+                        <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', background: stat.color, filter: 'blur(50px)', opacity: 0.1, pointerEvents: 'none' }} />
+                        
+                        <div className="elite-card-body flex items-center gap-6 p-7 relative z-10">
+                            <div style={{ 
+                                width: '3.5rem', 
+                                height: '3.5rem', 
+                                borderRadius: '1.25rem', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                border: '1px solid rgba(255, 255, 255, 0.03)',
+                                background: 'rgba(255, 255, 255, 0.015)',
+                                color: stat.color,
+                                boxShadow: `0 8px 16px ${stat.color}15`
+                            }}>
+                                <stat.icon size={24} />
+                            </div>
+                            <div>
+                                <p className="text-tactical" style={{ fontSize: '8px', opacity: 0.4, marginBottom: '4px', letterSpacing: '0.15em', fontWeight: 950 }}>{stat.label.toUpperCase()}</p>
+                                <h3 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0, fontStyle: 'italic', color: 'var(--text-main)', lineHeight: 1, letterSpacing: '-0.02em' }}>{stat.value}</h3>
+                                <div className="flex items-center gap-1 mt-1.5">
+                                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: stat.color, opacity: 0.5 }} />
+                                    <p className="text-tactical" style={{ fontSize: '7px', opacity: 0.3, fontWeight: 800 }}>{stat.trend}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Management Matrix */}
+            <div className="elite-card" style={{ background: 'rgba(255, 255, 255, 0.01)' }}>
+                <div className="elite-card-body" style={{ padding: 0 }}>
+                    {/* Interaction Header */}
+                    <div className="flex flex-wrap items-center gap-8 p-5 border-b border-white/[0.05] bg-slate-900/30">
+                        <div style={{ flex: 1, minWidth: '350px' }}>
+                            <Input
+                                placeholder="Filter identities across deep telemetry..."
+                                startContent={<Search size={18} style={{ color: 'var(--text-muted)', marginRight: '6px' }} />}
+                                value={searchQuery}
+                                onValueChange={setSearchQuery}
+                                variant="bordered"
+                                className="search-input-elite"
+                                classNames={{
+                                    inputWrapper: "h-12 border-white/[0.05] focus-within:border-blue-500/40 bg-white/[0.02] rounded-xl flex transition-colors",
+                                    input: "text-sm font-medium",
+                                }}
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-6">
+                             <div className="flex items-center gap-3">
+                                 <div className="status-dot animate-pulse-soft" style={{ background: '#3b82f6', width: '6px', height: '6px', boxShadow: '0 0 10px #3b82f6' }} />
+                                 <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4, fontStyle: 'italic' }}>SYNCHRONIZING_DIRECTORY</span>
+                             </div>
+                             <Divider orientation="vertical" style={{ height: '1.5rem', opacity: 0.1 }} />
+                             <Button 
+                                isIconOnly 
+                                variant="flat" 
+                                onPress={fetchUsers}
+                                isLoading={loading}
+                                style={{ height: '2.75rem', width: '2.75rem', borderRadius: '0.875rem', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid var(--border-dim)' }}
+                            >
+                                <RefreshCw size={18} />
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Data Visualization Grid */}
+                    <div style={{ minHeight: '550px' }}>
+                        <UserAccessControl
+                            users={filteredUsers}
+                            onAction={handleAction}
+                            onEditRequest={(u) => { setSelectedUser(u); setShowModal(true); }}
+                        />
+                    </div>
+                </div>
             </div>
 
             <ConfirmModal
                 open={!!confirmDelete}
-                title="Remove user"
-                message={confirmDelete ? `Remove "${confirmDelete.username || confirmDelete.full_name}" permanently? This cannot be undone.` : ''}
+                title="Decommission Principal Identity"
+                message={confirmDelete ? `Are you certain you wish to decommission the security principal "${confirmDelete.username}"? All associated access keys and signal credentials will be purged immediately.` : ''}
                 variant="danger"
-                confirmLabel="Remove"
-                cancelLabel="Cancel"
+                confirmLabel="Revoke Authority"
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setConfirmDelete(null)}
                 loading={deleteLoading}
@@ -226,6 +284,6 @@ export default function UsersPage() {
                 selectedUser={selectedUser}
                 users={[]}
             />
-        </div>
+        </PageShell>
     );
 }
