@@ -2,6 +2,9 @@ import React, { useEffect, useState, useCallback, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Button, 
+    Card,
+    CardBody,
+    CardHeader,
     Divider,
     Progress,
     Tooltip
@@ -46,8 +49,8 @@ import PageShell from '../components/Layout/PageShell';
    PREMIUM ELITE STAT CARD
 ================================ */
 const StatCard = ({ icon: Icon, label, value, subtext, color, loading }) => (
-  <div className={`elite-card elite-card-interactive overflow-hidden`} style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.05)' }}>
-    <div className="elite-card-body" style={{ padding: '1.75rem', position: 'relative' }}>
+  <Card className="admin-card elite-card-interactive overflow-hidden">
+    <CardBody className="relative p-7">
       {/* Background Decorative Glow */}
       <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', background: `var(--${color}, #3b82f6)`, filter: 'blur(50px)', opacity: 0.1, pointerEvents: 'none' }} />
       
@@ -78,8 +81,8 @@ const StatCard = ({ icon: Icon, label, value, subtext, color, loading }) => (
       {loading && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', background: `var(--${color}, #3b82f6)`, opacity: 0.2 }} className="animate-pulse" />
       )}
-    </div>
-  </div>
+    </CardBody>
+  </Card>
 );
 
 const HealthMetric = ({ label, value, status, icon: Icon }) => (
@@ -187,7 +190,7 @@ export default function Dashboard() {
             />
 
             {/* Core Metrics Tactical Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="admin-grid-stats">
                 <StatCard label="Nodal Assets" value={stats.totalDevices} icon={Server} color="primary" subtext="Deployed infrastructure" loading={loading} />
                 <StatCard label="Link Status" value={stats.onlineDevices} icon={Wifi} color="success" subtext={stats.totalDevices > 0 ? `${Math.round((stats.onlineDevices / stats.totalDevices) * 100)}% reachability` : '0% reachability'} loading={loading} />
                 <StatCard label="Lost Packets" value={stats.offlineDevices} icon={WifiOff} color="danger" subtext="Requires diagnostic" loading={loading} />
@@ -197,8 +200,8 @@ export default function Dashboard() {
             {/* Intelligence and Vitality Layer */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Main Visualizer Expansion */}
-                <div className="lg:col-span-8 elite-card">
-                    <div className="elite-card-header" style={{ padding: '2rem 2.5rem' }}>
+                <Card className="admin-card lg:col-span-8">
+                    <CardHeader className="admin-card-header px-8 py-6">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <TrendingUp className="text-primary" size={20} />
                             <div>
@@ -210,8 +213,8 @@ export default function Dashboard() {
                              <div className="status-dot animate-pulse-soft" style={{ background: 'var(--primary)', width: '6px', height: '6px' }} />
                              <span className="text-tactical" style={{ fontSize: '9px', fontStyle: 'italic', opacity: 0.4 }}>ANALYTICS_V4</span>
                         </div>
-                    </div>
-                    <div className="elite-card-body" style={{ padding: '0 2rem 2.5rem' }}>
+                    </CardHeader>
+                    <CardBody className="px-8 pb-8 pt-0">
                         {analytics && Array.isArray(analytics.device_growth) ? (
                             <div style={{ height: '360px', width: '100%' }}>
                                 <ResponsiveContainer width="100%" height="100%">
@@ -248,13 +251,13 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         )}
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
 
                 {/* System Vitality Sidebar Enhanced */}
                 <div className="lg:col-span-4 flex flex-col gap-8">
-                    <div className="elite-card" style={{ background: 'rgba(255, 255, 255, 0.01)' }}>
-                        <div className="elite-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '2.25rem', padding: '2.5rem' }}>
+                    <Card className="admin-card">
+                        <CardBody className="flex flex-col gap-6 p-8">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                  <Zap className="text-warning" size={20} />
                                  <h4 style={{ margin: 0, fontSize: '0.925rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Kernel Vitality</h4>
@@ -284,8 +287,8 @@ export default function Dashboard() {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    </div>
+                        </CardBody>
+                    </Card>
 
                     <Button
                         as={Link}
@@ -312,8 +315,8 @@ export default function Dashboard() {
             {/* Audit & Tactical Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Audit Registry Chronology */}
-                <div className="lg:col-span-8 elite-card">
-                    <div className="elite-card-header" style={{ padding: '1.5rem 2.5rem' }}>
+                <Card className="admin-card lg:col-span-8">
+                    <CardHeader className="admin-card-header flex-between py-6 px-8">
                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <Clock className="text-muted" size={20} style={{ opacity: 0.4 }} />
                             <div>
@@ -322,8 +325,8 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <Button as={Link} to="/activity" size="sm" variant="flat" style={{ fontWeight: 900, fontSize: '9px', textTransform: 'uppercase', background: 'rgba(255,255,255,0.03)', borderRadius: '0.75rem' }}>Analyze Vault</Button>
-                    </div>
-                    <div className="elite-card-body" style={{ padding: 0 }}>
+                    </CardHeader>
+                    <CardBody className="p-0">
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             {activities.length === 0 ? (
                                 <div style={{ padding: '8rem', textAlign: 'center', opacity: 0.2 }} className="text-tactical">Awaiting nodal stimulus...</div>
@@ -349,15 +352,15 @@ export default function Dashboard() {
                                 ))
                             )}
                         </div>
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
 
                 {/* Tactical Shortcuts Matrix */}
-                <div className="lg:col-span-4 elite-card">
-                     <div className="elite-card-header" style={{ padding: '1.5rem 2.5rem' }}>
+                <Card className="admin-card lg:col-span-4">
+                     <CardHeader className="admin-card-header">
                          <h4 style={{ margin: 0, fontSize: '0.925rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Tactical Access</h4>
-                     </div>
-                     <div className="elite-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '0 2.5rem 2.5rem' }}>
+                     </CardHeader>
+                     <CardBody className="flex flex-col gap-3 px-8 pb-8">
                         {[
                             { label: 'Hardware Registry', to: '/devices', icon: Server, color: 'primary', info: 'Fleet Ops' },
                             { label: 'Identity Hub', to: '/users', icon: Users, color: 'indigo', info: 'Principals' },
@@ -379,8 +382,8 @@ export default function Dashboard() {
                                 </div>
                             </Link>
                         ))}
-                     </div>
-                </div>
+                     </CardBody>
+                </Card>
             </div>
         </PageShell>
     );

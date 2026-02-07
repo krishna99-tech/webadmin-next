@@ -33,7 +33,9 @@ export default function Modals({
         if (selectedDevice) {
             setFormData({
                 name: selectedDevice.name || '',
-                user_id: selectedDevice.user_id || '',
+                type: selectedDevice.type || 'sensor',
+                location: selectedDevice.location || '',
+                user_id: selectedDevice.user_id || selectedDevice.owner_id || '',
                 status: selectedDevice.status || 'offline'
             });
         } else if (selectedUser) {
@@ -41,7 +43,7 @@ export default function Modals({
                 username: selectedUser.username || '',
                 full_name: selectedUser.full_name || '',
                 email: selectedUser.email || '',
-                role: selectedUser.role || 'User',
+                role: selectedUser.role || (selectedUser.is_admin ? 'Admin' : 'User'),
                 is_active: selectedUser.is_active ?? true
             });
         } else if (showBroadcastModal) {
@@ -71,7 +73,15 @@ export default function Modals({
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            await onConfirm(formData);
+            let payload = { ...formData };
+            if (isDevice) {
+                // Ensure user_id is sent correctly (empty string for orphaned)
+                if (payload.user_id === 'system' || payload.user_id === '') payload.user_id = null;
+            } else if (!isBroadcast && selectedUser) {
+                // User update: derive is_admin from role
+                payload.is_admin = formData.role === 'Admin';
+            }
+            await onConfirm(payload);
             onClose();
         } catch (err) {
             console.error('Modal submission failed:', err);
@@ -86,6 +96,8 @@ export default function Modals({
             onClose={onClose}
             size="md"
             backdrop="blur"
+            isDismissable={!loading}
+            shouldCloseOnOverlayClick={!loading}
             classNames={{
                 base: "bg-slate-950/90 border border-divider/10 backdrop-blur-xl shadow-2xl",
                 header: "border-b border-divider/5",
@@ -165,23 +177,51 @@ export default function Modals({
                                         value={formData.name || ''}
                                         onValueChange={v => setFormData({ ...formData, name: v })}
                                     />
+                                    <div className="modal-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <Select
+                                            label="Device Type"
+                                            variant="bordered"
+                                            labelPlacement="outside"
+                                            placeholder="Select type"
+                                            selectedKeys={formData.type ? [formData.type] : ['sensor']}
+                                            onSelectionChange={(keys) => setFormData({ ...formData, type: Array.from(keys)[0] || 'sensor' })}
+                                        >
+                                            <SelectItem key="sensor" textValue="Sensor">Sensor</SelectItem>
+                                            <SelectItem key="actuator" textValue="Actuator">Actuator</SelectItem>
+                                            <SelectItem key="gateway" textValue="Gateway">Gateway</SelectItem>
+                                        </Select>
+                                        <Input
+                                            label="Location"
+                                            labelPlacement="outside"
+                                            placeholder="e.g. Warehouse A"
+                                            variant="bordered"
+                                            value={formData.location || ''}
+                                            onValueChange={v => setFormData({ ...formData, location: v })}
+                                        />
+                                    </div>
                                     <Select
                                         label="Assigned System Owner"
                                         variant="bordered"
                                         labelPlacement="outside"
                                         placeholder="Select a registered user"
-                                        selectedKeys={formData.user_id ? [formData.user_id] : []}
-                                        onChange={e => setFormData({ ...formData, user_id: e.target.value })}
+                                        selectedKeys={formData.user_id ? [String(formData.user_id)] : ['system']}
+                                        onSelectionChange={(keys) => {
+                                            const val = Array.from(keys)[0];
+                                            setFormData({ ...formData, user_id: (val === 'system' || !val) ? '' : val });
+                                        }}
                                     >
-                                        <SelectItem key="system" value="">System / Orphaned</SelectItem>
-                                        {users.map(u => (
-                                            <SelectItem key={u.id} value={u.id} textValue={u.username}>
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span style={{ fontSize: '0.875rem' }}>{u.username}</span>
-                                                    <span className="text-dim" style={{ fontSize: '0.75rem' }}>{u.email}</span>
-                                                </div>
-                                            </SelectItem>
-                                        ))}
+                                        <SelectItem key="system" textValue="System / Orphaned">System / Orphaned</SelectItem>
+                                        {users.map(u => {
+                                            const uid = u.id || u._id;
+                                            return (
+                                                <SelectItem key={String(uid)} textValue={u.username}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <span style={{ fontSize: '0.875rem' }}>{u.username}</span>
+                                                        <span className="text-dim" style={{ fontSize: '0.75rem' }}>{u.email}</span>
+                                                    </div>
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </Select>
                                 </>
                             ) : (

@@ -18,6 +18,7 @@ import {
   Zap,
   Settings,
   LogOut,
+  Bell,
 } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 
@@ -37,6 +38,7 @@ const menuItems = [
   { group: 'Perimeter', items: [
     { path: '/security-rules', label: 'Protocols', icon: Shield },
     { path: '/activity', label: 'Audit Vault', icon: History },
+    { path: '/alerts', label: 'Alerts', icon: Bell },
   ]},
 ];
 

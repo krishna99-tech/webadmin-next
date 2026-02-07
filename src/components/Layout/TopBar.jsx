@@ -28,6 +28,7 @@ const BREADCRUMB_LABELS = {
   webhooks: 'Signal API',
   'security-rules': 'Protocols',
   activity: 'Audit Vault',
+  alerts: 'Alerts',
   analytics: 'Intelligence',
   settings: 'System Config',
 };
@@ -44,6 +45,18 @@ const TopBar = () => {
 
   const isAdmin = currentUser?.is_admin ?? currentUser?.role === 'Admin';
   const pathname = location.pathname;
+
+  // Command palette shortcut (Ctrl/Cmd+K)
+  useEffect(() => {
+    const handleKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus?.();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   // --- Logic: Notifications ---
   useEffect(() => {
@@ -96,11 +109,12 @@ const TopBar = () => {
       maxWidth="full"
       className="top-bar-elite topbar-root"
       style={{
-        background: 'rgba(2, 6, 23, 0.65)',
+        background: 'rgba(2, 6, 23, 0.85)',
         backdropFilter: 'blur(20px) saturate(180%)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+        minHeight: 'var(--topbar-height)',
         height: 'var(--topbar-height)',
-        padding: '0 2.5rem',
+        padding: '0 1.5rem 0 2rem',
       }}
     >
       {/* 1. Search Command Center */}
@@ -203,16 +217,20 @@ const TopBar = () => {
           </Button>
         </Tooltip>
 
-        <Badge content={unreadCount} color="danger" isInvisible={unreadCount === 0} size="sm" shape="circle" style={{ border: '2px solid var(--bg-dark)' }}>
-          <Button
-            isIconOnly
-            variant="light"
-            className="hover:border-white/5"
-            style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.875rem', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.02)' }}
-          >
-            <Bell size={20} />
-          </Button>
-        </Badge>
+        <Tooltip content="Alerts & Notifications">
+          <Badge content={unreadCount} color="danger" isInvisible={unreadCount === 0} size="sm" shape="circle" style={{ border: '2px solid var(--bg-dark)' }}>
+            <Button
+              as={Link}
+              to="/alerts"
+              isIconOnly
+              variant="light"
+              className="hover:border-white/5"
+              style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.875rem', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.02)' }}
+            >
+              <Bell size={20} />
+            </Button>
+          </Badge>
+        </Tooltip>
         
         <Divider orientation="vertical" className="hidden-mobile" style={{ height: '1.75rem', margin: '0 0.25rem', opacity: 0.05 }} />
 

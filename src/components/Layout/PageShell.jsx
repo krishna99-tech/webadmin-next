@@ -2,14 +2,14 @@ import React from 'react';
 
 const PageShell = ({
   children,
-  gap = '2.5rem',
+  gap = '2rem',
   paddingBottom = '6rem',
   className = '',
   style = {},
 }) => {
   return (
     <div
-      className={`animate-fade-in ${className}`.trim()}
+      className={`admin-page-shell animate-fade-in ${className}`.trim()}
       style={{
         display: 'flex',
         flexDirection: 'column',

@@ -6,7 +6,7 @@ import './globals.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <HeroUIProvider>
+    <HeroUIProvider theme="dark">
       <App />
     </HeroUIProvider>
   </React.StrictMode>

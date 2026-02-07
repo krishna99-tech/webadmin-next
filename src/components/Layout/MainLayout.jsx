@@ -61,9 +61,9 @@ const MainLayout = ({ children }) => {
         <Sidebar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
 
         <div className="main-content">
-          <div className="lg-hidden">
+          <header className="topbar-wrapper lg-hidden">
             <TopBar />
-          </div>
+          </header>
 
           <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div className={isBroadcastPage ? 'viewport-full' : 'viewport-inner'} style={{ flex: 1 }}>

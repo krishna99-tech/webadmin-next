@@ -13,6 +13,7 @@ import BroadcastPage from './pages/BroadcastPage';
 import WebhooksPage from './pages/WebhooksPage';
 import SecurityRulesPage from './pages/SecurityRulesPage';
 import ActivityPage from './pages/ActivityPage';
+import AlertsPage from './pages/AlertsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 
@@ -92,6 +93,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ActivityPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alerts"
+              element={
+                <ProtectedRoute>
+                  <AlertsPage />
                 </ProtectedRoute>
               }
             />

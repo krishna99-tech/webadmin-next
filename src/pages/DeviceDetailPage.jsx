@@ -12,6 +12,10 @@ import {
     Avatar,
 } from '@heroui/react';
 import adminService from '../services/adminService';
+import { useIoT } from '../context/IoTContext';
+import { useToast } from '../context/ToastContext';
+import Modals from '../components/Modals';
+import ConfirmModal from '../components/UI/ConfirmModal';
 import {
     Smartphone, 
     Plus, 
@@ -38,6 +42,8 @@ import PageShell from '../components/Layout/PageShell';
 export default function DeviceDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const toast = useToast();
+    const { updateDevice, deleteDevice, users = [], fetchUsers } = useIoT();
 
     const [device, setDevice] = useState(null);
     const [dashboards, setDashboards] = useState([]);
@@ -45,11 +51,18 @@ export default function DeviceDetailPage() {
     const [widgets, setWidgets] = useState([]);
     const [telemetry, setTelemetry] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     useEffect(() => {
         if (!id) return;
         loadAllData();
     }, [id]);
+
+    useEffect(() => {
+        fetchUsers?.();
+    }, [fetchUsers]);
 
     const loadAllData = async () => {
         setLoading(true);
@@ -82,6 +95,31 @@ export default function DeviceDetailPage() {
             setTelemetry(data);
         } catch (err) {
             console.error('Refresh failed', err);
+        }
+    };
+
+    const handleEditConfirm = async (formData) => {
+        try {
+            await updateDevice(id, formData);
+            toast.success('Node updated');
+            loadAllData();
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || err.message || 'Update failed');
+            throw err;
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        setDeleteLoading(true);
+        try {
+            await deleteDevice(id);
+            toast.success('Asset decommissioned');
+            setConfirmDelete(false);
+            navigate('/devices');
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || err.message || 'Decommission failed');
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -134,8 +172,8 @@ export default function DeviceDetailPage() {
                         >
                             <ArrowLeft size={20} />
                         </Button>
-                        <Button variant="flat" style={{ fontWeight: 800, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', height: '3rem' }} startContent={<Edit2 size={16}/>}>Modify Node</Button>
-                        <Button color="danger" variant="flat" style={{ fontWeight: 800, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', height: '3rem' }} startContent={<Trash2 size={16}/>}>Decommission</Button>
+                        <Button variant="flat" onPress={() => setShowEditModal(true)} style={{ fontWeight: 800, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', height: '3rem' }} startContent={<Edit2 size={16}/>}>Modify Node</Button>
+                        <Button color="danger" variant="flat" onPress={() => setConfirmDelete(true)} style={{ fontWeight: 800, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', height: '3rem' }} startContent={<Trash2 size={16}/>}>Decommission</Button>
                     </div>
                 }
             />
@@ -410,6 +448,28 @@ export default function DeviceDetailPage() {
                     </div>
                 </div>
             </div>
+
+            <Modals
+                showDeviceModal={showEditModal}
+                showUserModal={false}
+                showBroadcastModal={false}
+                onClose={() => setShowEditModal(false)}
+                onConfirm={handleEditConfirm}
+                selectedDevice={device}
+                selectedUser={null}
+                users={users}
+            />
+
+            <ConfirmModal
+                open={confirmDelete}
+                title="Purge Node Infrastructure"
+                message="Are you certain you wish to decommission this hardware node? This action is irreversible."
+                variant="danger"
+                confirmLabel="Execute Purge"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setConfirmDelete(false)}
+                loading={deleteLoading}
+            />
         </PageShell>
     );
 }

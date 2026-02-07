@@ -1,5 +1,7 @@
 import React from 'react';
 import { 
+    Card,
+    CardBody,
     Table, 
     TableHeader, 
     TableColumn, 
@@ -27,13 +29,13 @@ export default function UserAccessControl({ users, onAction, onEditRequest }) {
     return (
         <div className="user-grid">
             {users.map((user) => (
-                <div
+                <Card
                     key={user.id || user._id}
-                    className="elite-card elite-card-interactive user-card"
-                    style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.04)' }}
-                    onClick={() => onEditRequest(user)}
+                    className="admin-card elite-card-interactive user-card cursor-pointer"
+                    isPressable
+                    onPress={() => onEditRequest(user)}
                 >
-                    <div className="elite-card-body user-card-body">
+                    <CardBody className="user-card-body">
                         {/* Header: Identity */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                             <AvatarInner user={user} />
@@ -96,7 +98,7 @@ export default function UserAccessControl({ users, onAction, onEditRequest }) {
                         </div>
 
                         {/* Administrative Command Bar */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
                             <Button 
                                 variant="flat" 
                                 style={{ 
@@ -112,7 +114,7 @@ export default function UserAccessControl({ users, onAction, onEditRequest }) {
                                     letterSpacing: '0.1em'
                                 }}
                                 startContent={user.is_active ? <Lock size={14} /> : <Unlock size={14} />}
-                                onClick={(e) => { e.stopPropagation(); onAction(user, 'toggle'); }}
+                                onPress={() => onAction(user, 'toggle')}
                             >
                                 {user.is_active ? "Suspend" : "Restore"}
                             </Button>
@@ -127,7 +129,7 @@ export default function UserAccessControl({ users, onAction, onEditRequest }) {
                                     color: 'var(--primary)',
                                     border: '1px solid rgba(255,255,255,0.03)'
                                 }}
-                                onClick={(e) => { e.stopPropagation(); onEditRequest(user); }}
+                                onPress={() => onEditRequest(user)}
                             >
                                 <Edit size={16} />
                             </Button>
@@ -142,13 +144,13 @@ export default function UserAccessControl({ users, onAction, onEditRequest }) {
                                     color: 'var(--danger)',
                                     border: '1px solid rgba(239, 68, 68, 0.1)'
                                 }}
-                                onClick={(e) => { e.stopPropagation(); onAction(user, 'delete'); }}
+                                onPress={() => onAction(user, 'delete')}
                             >
                                 <Trash2 size={16} />
                             </Button>
                         </div>
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
             ))}
         </div>
     );

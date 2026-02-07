@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
     Button, 
+    Card,
+    CardBody,
     Input, 
     Textarea, 
     Checkbox, 
@@ -175,43 +177,39 @@ export default function BroadcastPage() {
                         NEW DISPATCH
                     </Button>
 
-                    <nav className="elite-card" style={{ background: 'rgba(255, 255, 255, 0.01)', padding: '0.75rem' }}>
+                    <Card className="admin-card broadcast-nav">
+                    <CardBody className="p-3">
                         {[
                             { label: 'Signal Logs', icon: Inbox, key: 'inbox', count: dispatches.length },
                             { label: 'Priority Star', icon: Star, key: 'starred', count: dispatches.filter(d => d.starred).length },
                             { label: 'Archived Trace', icon: Archive, key: 'archive', count: 0 },
                             { label: 'Purged Content', icon: Trash2, key: 'trash', count: 0 },
                         ].map(item => (
-                            <button
+                            <Button
                                 key={item.key}
-                                onClick={() => setActiveFolder(item.key)}
+                                onPress={() => setActiveFolder(item.key)}
+                                variant="light"
+                                fullWidth
                                 style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '1rem 1.25rem',
+                                    height: '3.5rem',
+                                    padding: '0 1.25rem',
                                     borderRadius: '1rem',
-                                    border: 'none',
                                     background: activeFolder === item.key ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                                     color: activeFolder === item.key ? 'var(--primary)' : 'var(--text-dim)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s'
+                                    justifyContent: 'space-between',
                                 }}
                                 className="nav-item-hover"
+                                startContent={<item.icon size={18} strokeWidth={activeFolder === item.key ? 2.5 : 2} />}
+                                endContent={item.count > 0 ? <span className="text-tactical" style={{ fontSize: '9px', fontWeight: 900, opacity: 0.4 }}>{item.count}</span> : null}
                             >
-                                <div className="flex items-center gap-4">
-                                    <item.icon size={18} strokeWidth={activeFolder === item.key ? 2.5 : 2} />
-                                    <span className="text-tactical" style={{ fontSize: '12px', fontWeight: activeFolder === item.key ? 800 : 500 }}>{item.label}</span>
-                                </div>
-                                {item.count > 0 && (
-                                    <span style={{ fontSize: '9px', fontWeight: 900, opacity: 0.4 }}>{item.count}</span>
-                                )}
-                            </button>
+                                <span className="text-tactical" style={{ fontSize: '12px', fontWeight: activeFolder === item.key ? 800 : 500 }}>{item.label}</span>
+                            </Button>
                         ))}
-                    </nav>
+                    </CardBody>
+                    </Card>
 
-                    <div className="elite-card" style={{ background: 'rgba(255, 255, 255, 0.01)', padding: '1.5rem' }}>
+                    <Card className="admin-card broadcast-status-card">
+                    <CardBody>
                          <h4 className="text-tactical mb-4 opacity-30 text-[9px]">SYSTEM_STATUS</h4>
                          <div className="flex flex-col gap-4">
                              <div className="flex justify-between items-center">
@@ -226,32 +224,28 @@ export default function BroadcastPage() {
                                  <span className="text-tactical" style={{ fontSize: '9px', opacity: 0.4 }}>AES_256_GCM</span>
                              </div>
                          </div>
-                    </div>
+                    </CardBody>
+                    </Card>
                 </div>
 
                 {/* Dispatch Feed */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="broadcast-feed">
                     {/* Interaction Bar */}
-                    <div className="elite-card bg-white/[0.01] px-5 py-3">
-                        <div className="flex-between">
-                            <div style={{ flex: 1, maxWidth: '400px', position: 'relative' }}>
-                                <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search signal telemetry..." 
+                    <Card className="admin-card broadcast-toolbar">
+                    <CardBody className="flex flex-row items-center justify-between gap-4 py-3 px-5">
+                        <div className="flex-between flex-1">
+                            <div style={{ flex: 1, maxWidth: '400px' }}>
+                                <Input
+                                    placeholder="Search signal telemetry..."
+                                    startContent={<Search size={16} style={{ opacity: 0.3 }} />}
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    style={{ 
-                                        width: '100%', 
-                                        height: '2.75rem', 
-                                        background: 'rgba(255,255,255,0.02)', 
-                                        border: '1px solid rgba(255,255,255,0.04)', 
-                                        borderRadius: '0.875rem', 
-                                        padding: '0 1rem 0 3rem',
-                                        color: 'white',
-                                        fontSize: '12px',
-                                        outline: 'none'
-                                    }} 
+                                    onValueChange={setSearchQuery}
+                                    variant="bordered"
+                                    size="md"
+                                    classNames={{
+                                        inputWrapper: "h-11 border-white/[0.05] bg-white/[0.02] rounded-xl",
+                                        input: "text-sm font-medium",
+                                    }}
                                 />
                             </div>
                             <div className="flex items-center gap-4">
@@ -264,7 +258,8 @@ export default function BroadcastPage() {
                                 </Button>
                             </div>
                         </div>
-                    </div>
+                    </CardBody>
+                    </Card>
 
                     {/* Feed List */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -273,23 +268,21 @@ export default function BroadcastPage() {
                                 <RefreshCw className="animate-spin text-primary" size={32} style={{ opacity: 0.5 }} />
                             </div>
                         ) : filteredDispatches.length === 0 ? (
-                            <div className="elite-card" style={{ padding: '8rem', textAlign: 'center', opacity: 0.2 }}>
-                                <ZapOff size={40} style={{ marginBottom: '1.5rem' }} />
-                                <p className="text-tactical" style={{ fontSize: '11px', letterSpacing: '0.1em' }}>NO_DISPATCH_SIGNALS_FOUND</p>
-                            </div>
+                            <Card className="admin-card broadcast-empty">
+                                <CardBody className="flex flex-col items-center justify-center py-24">
+                                    <ZapOff size={40} className="mb-6" />
+                                    <p className="text-tactical" style={{ fontSize: '11px', letterSpacing: '0.1em' }}>NO_DISPATCH_SIGNALS_FOUND</p>
+                                </CardBody>
+                            </Card>
                         ) : (
                             filteredDispatches.map((signal) => (
-                                <div 
+                                <Card 
                                     key={signal.id} 
-                                    className="elite-card elite-card-interactive" 
-                                    onClick={() => setSelectedDispatch(signal)}
-                                    style={{ 
-                                        background: 'rgba(255, 255, 255, 0.01)', 
-                                        border: '1px solid rgba(255,255,255,0.03)',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="admin-card broadcast-signal-card cursor-pointer"
+                                    isPressable
+                                    onPress={() => setSelectedDispatch(signal)}
                                 >
-                                    <div className="elite-card-body flex items-center gap-8 px-8 py-6">
+                                    <CardBody className="flex flex-row items-center gap-8 px-8 py-6">
                                         <div className="flex items-center gap-6 flex-1">
                                             <div style={{ position: 'relative' }}>
                                                 <Avatar 
@@ -317,8 +310,8 @@ export default function BroadcastPage() {
                                                 {new Date(signal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                                             </p>
                                         </div>
-                                    </div>
-                                </div>
+                                    </CardBody>
+                                </Card>
                             ))
                         )}
                     </div>

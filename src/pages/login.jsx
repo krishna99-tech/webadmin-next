@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { 
     Button, 
+    Card,
+    CardBody,
     Input, 
     Divider 
 } from '@heroui/react';
@@ -61,8 +63,8 @@ const Login = () => {
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--bg-dark), transparent, transparent)' }}></div>
             </div>
 
-            <div className="elite-card animate-fade-in-up" style={{ width: '100%', maxWidth: '440px', zIndex: 10, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(40px)', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.5)' }}>
-                <div className="elite-card-body" style={{ padding: '3rem' }}>
+            <Card className="admin-card animate-fade-in-up w-full max-w-[440px] z-10" style={{ background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(40px)', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.5)' }}>
+                <CardBody className="p-12">
                     <div className="flex-center" style={{ flexDirection: 'column', marginBottom: '2.5rem' }}>
                         <div style={{ 
                             width: '4rem', 
@@ -175,8 +177,8 @@ const Login = () => {
                         &copy; {new Date().getFullYear()} ThingsNXT Systems<br/>
                         All Access Attempts are Monitored
                     </p>
-                </div>
-            </div>
+                </CardBody>
+            </Card>
 
             {/* Floating Elements */}
             <div style={{ position: 'absolute', bottom: '2.5rem', left: '2.5rem', opacity: 0.2 }} className="hidden lg:block hover:opacity-100 transition-opacity">

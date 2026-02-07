@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     Card, 
     CardBody, 
+    CardHeader,
     Button, 
     Input, 
     Select, 
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '../components/Layout/PageHeader';
 import PageShell from '../components/Layout/PageShell';
+import { inputClassNames, selectClassNames, tableClassNames } from '../constants/uiClasses';
 
 export default function WebhooksPage() {
     const toast = useToast();
@@ -141,8 +143,8 @@ export default function WebhooksPage() {
 
             {/* Registration Form */}
             {showForm && (
-                <div className="elite-card animate-fade-in">
-                    <div className="elite-card-body" style={{ padding: '2rem' }}>
+                <Card className="admin-card animate-fade-in">
+                    <CardBody className="p-8">
                         <div className="flex items-center gap-4 mb-8">
                             <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
                                 <Zap size={20} />
@@ -219,25 +221,17 @@ export default function WebhooksPage() {
                                 </Button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
             )}
 
             {/* Active Nodes Table */}
-            <div className="elite-card">
-                <div className="elite-card-body" style={{ padding: 0 }}>
+            <Card className="admin-card">
+                <CardBody className="p-0">
                     <Table
                         aria-label="Webhook Cluster" 
                         removeWrapper
-                        classNames={{
-                            base: "elite-table-container",
-                            table: "min-h-[300px]",
-                            thead: "bg-white/[0.01]",
-                            th: "bg-transparent text-tactical text-[10px] h-14 px-6 border-b border-white/[0.03]",
-                            tbody: "divide-y divide-white/[0.02]",
-                            tr: "elite-table-row",
-                            td: "py-5 px-6"
-                        }}
+                        classNames={tableClassNames}
                     >
                         <TableHeader>
                             <TableColumn>ENDPOINT VECTOR</TableColumn>
@@ -285,8 +279,8 @@ export default function WebhooksPage() {
                             ))}
                         </TableBody>
                     </Table>
-                </div>
-            </div>
+                </CardBody>
+            </Card>
 
             {/* Tactical Footer */}
             <div className="flex justify-center gap-12 opacity-30 pt-8">

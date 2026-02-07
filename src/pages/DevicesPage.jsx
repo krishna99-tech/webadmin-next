@@ -5,6 +5,9 @@ import Modals from '../components/Modals';
 import adminService from '../services/adminService';
 import {
     Button,
+    Card,
+    CardBody,
+    Checkbox,
     Input,
     Select,
     SelectItem,
@@ -46,11 +49,12 @@ import ConfirmModal from '../components/UI/ConfirmModal';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Layout/PageHeader';
 import PageShell from '../components/Layout/PageShell';
+import { inputClassNames } from '../constants/uiClasses';
 
 /* ===============================
    TACTICAL NODE CARD
 ================================ */
-const NodeCard = ({ device, onAction, onEdit, onTransfer, onDetails }) => {
+const NodeCard = ({ device, onAction, onEdit, onTransfer, onDetails, selected, onSelect }) => {
     const getStatusColor = (status) => {
         switch(status) {
             case 'online': return 'text-emerald-500';
@@ -79,16 +83,16 @@ const NodeCard = ({ device, onAction, onEdit, onTransfer, onDetails }) => {
     };
 
     return (
-        <div 
-            className="elite-card elite-card-interactive" 
-            style={{ 
-                background: 'rgba(255, 255, 255, 0.01)', 
-                border: '1px solid rgba(255,255,255,0.05)',
-                padding: '1.5rem'
-            }}
-        >
+        <Card className="admin-card elite-card-interactive cursor-pointer" isPressable onPress={onDetails}>
+        <CardBody className="p-6">
             {/* Header Identity */}
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-4 gap-4">
+            {onSelect && (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <Checkbox isSelected={selected} onValueChange={() => onSelect()} />
+                </div>
+            )}
+            <div className="flex justify-between items-start flex-1 min-w-0">
                 <div className="flex items-center gap-4">
                     <div style={{ 
                         width: '3.5rem', 
@@ -120,6 +124,7 @@ const NodeCard = ({ device, onAction, onEdit, onTransfer, onDetails }) => {
                     <span className={`text-tactical ${getStatusColor(device.status)}`} style={{ fontSize: '9px', fontWeight: 900 }}>{device.status.toUpperCase()}</span>
                 </div>
             </div>
+            </div>
 
             {/* Tactical Telemetry */}
             <div className="grid grid-cols-3 gap-4 p-4 bg-white/[0.01] rounded-2xl border border-white/[0.03] mb-6">
@@ -147,7 +152,7 @@ const NodeCard = ({ device, onAction, onEdit, onTransfer, onDetails }) => {
             </div>
 
             {/* Governance Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                 <Button 
                     variant="flat" 
                     onPress={onDetails}
@@ -161,7 +166,8 @@ const NodeCard = ({ device, onAction, onEdit, onTransfer, onDetails }) => {
                     <Tooltip content="Transfer Control"><Button isIconOnly variant="flat" onPress={onTransfer} style={{ borderRadius: '0.75rem', width: '2.5rem', height: '2.5rem', background: 'rgba(255,255,255,0.03)', color: 'var(--primary)' }}><Users size={16} /></Button></Tooltip>
                 </div>
             </div>
-        </div>
+        </CardBody>
+        </Card>
     );
 };
 
@@ -198,6 +204,7 @@ export default function DevicesPage() {
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [optimisticUpdates, setOptimisticUpdates] = useState({});
+    const [selectedIds, setSelectedIds] = useState(new Set());
 
     useEffect(() => {
         fetchDevices();
@@ -302,6 +309,61 @@ export default function DevicesPage() {
         }
     };
 
+    const toggleSelect = (id) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const selectAll = () => {
+        if (selectedIds.size === displayDevices.length) setSelectedIds(new Set());
+        else setSelectedIds(new Set(displayDevices.map(d => d.id || d._id)));
+    };
+
+    const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+    const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
+    const [bulkAssignUserId, setBulkAssignUserId] = useState('');
+    const [bulkAssignLoading, setBulkAssignLoading] = useState(false);
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.size === 0) return;
+        setConfirmBulkDelete(false);
+        setDeleteLoading(true);
+        try {
+            for (const id of selectedIds) await deleteDevice(id);
+            toast.success(`${selectedIds.size} asset(s) decommissioned`);
+            setSelectedIds(new Set());
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || err.message || 'Bulk decommission failed');
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const handleBulkAssign = async () => {
+        if (!bulkAssignUserId || selectedIds.size === 0) {
+            toast.warning('Select a new owner');
+            return;
+        }
+        setBulkAssignLoading(true);
+        try {
+            for (const deviceId of selectedIds) {
+                await transferDeviceOwnership(deviceId, bulkAssignUserId);
+            }
+            toast.success(`${selectedIds.size} asset(s) assigned`);
+            setShowBulkAssignModal(false);
+            setBulkAssignUserId('');
+            setSelectedIds(new Set());
+        } catch (err) {
+            toast.error(err?.response?.data?.detail || err.message || 'Bulk assign failed');
+        } finally {
+            setBulkAssignLoading(false);
+        }
+    };
+
     const displayDevices = useMemo(() => {
         if (!devices) return [];
         let list = [...devices].filter(d => {
@@ -349,8 +411,8 @@ export default function DevicesPage() {
             />
 
             {/* Tactical Control Bar */}
-            <div className="elite-card" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <div className="elite-card-body flex items-center gap-8 px-7 py-3">
+            <Card className="admin-card">
+                <CardBody className="flex flex-wrap items-center gap-6 px-6 py-4">
                     <Tabs 
                         selectedKey={activeFleetTab} 
                         onSelectionChange={setActiveFleetTab}
@@ -366,17 +428,14 @@ export default function DevicesPage() {
                          <Tab key="orphaned" title="Unassigned" />
                     </Tabs>
 
-                    <div style={{ flex: 1 }}>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
                         <Input
-                            placeholder="Filter nodes via deep telemetry..."
+                            placeholder="Filter nodes..."
                             startContent={<Search size={16} style={{ opacity: 0.3 }} />}
                             value={searchQuery}
                             onValueChange={setSearchQuery}
                             variant="bordered"
-                            classNames={{
-                                inputWrapper: "h-12 border-white/[0.05] bg-white/[0.01] rounded-1.25rem",
-                                input: "text-sm font-medium",
-                            }}
+                            classNames={inputClassNames}
                         />
                     </div>
 
@@ -398,8 +457,31 @@ export default function DevicesPage() {
                         </Select>
                         <Button isIconOnly variant="flat" onPress={fetchDevices} isLoading={loading} style={{ width: '3rem', height: '3rem', borderRadius: '1rem', background: 'rgba(255,255,255,0.03)' }}><RefreshCw size={18} /></Button>
                     </div>
-                </div>
-            </div>
+                </CardBody>
+            </Card>
+
+            {/* Bulk Actions Bar */}
+            {selectedIds.size > 0 && (
+                <Card className="admin-card border-primary/30">
+                    <CardBody className="flex flex-row items-center justify-between py-4 px-6">
+                        <div className="flex items-center gap-4">
+                            <span className="text-tactical" style={{ fontSize: '10px' }}>{selectedIds.size} SELECTED</span>
+                            <Button size="sm" variant="flat" onPress={selectAll} style={{ fontSize: '9px', fontWeight: 800 }}>
+                                {selectedIds.size === displayDevices.length ? 'Clear' : 'Select All'}
+                            </Button>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Button size="sm" variant="flat" color="primary" onPress={() => setShowBulkAssignModal(true)} startContent={<Users size={14} />}>
+                                Bulk Assign Owner
+                            </Button>
+                            <Button size="sm" variant="flat" color="danger" onPress={() => setConfirmBulkDelete(true)} startContent={<Trash2 size={14} />}>
+                                Bulk Decommission
+                            </Button>
+                            <Button size="sm" variant="flat" onPress={() => setSelectedIds(new Set())}>Cancel</Button>
+                        </div>
+                    </CardBody>
+                </Card>
+            )}
 
             {/* Node Grid Visualization */}
             {loading && !devices.length ? (
@@ -407,24 +489,43 @@ export default function DevicesPage() {
                     <RefreshCw className="animate-spin text-primary" size={40} style={{ opacity: 0.4 }} />
                 </div>
             ) : displayDevices.length === 0 ? (
-                <div className="elite-card" style={{ padding: '10rem', textAlign: 'center', opacity: 0.15 }}>
-                    <AlertCircle size={48} style={{ marginBottom: '1.5rem' }} />
-                    <p className="text-tactical" style={{ fontSize: '14px', letterSpacing: '0.2em' }}>NO_HARDWARE_RESOURCES_DETECTED</p>
-                </div>
+                <Card className="admin-card">
+                    <CardBody className="flex flex-col items-center justify-center py-24 text-center opacity-40">
+                        <AlertCircle size={48} className="mb-6" />
+                        <p className="text-tactical" style={{ fontSize: '14px', letterSpacing: '0.2em' }}>NO_HARDWARE_RESOURCES_DETECTED</p>
+                    </CardBody>
+                </Card>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {displayDevices.map(device => (
+                <div className="admin-grid-stats" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+                    {displayDevices.map(device => {
+                        const id = device.id || device._id;
+                        return (
                         <NodeCard 
-                            key={device.id || device._id}
+                            key={id}
                             device={device}
                             onAction={handleAction}
                             onEdit={() => { setSelectedDevice(device); setShowModal(true); }}
                             onTransfer={() => { setTransferDevice(device); setShowTransferModal(true); }}
-                            onDetails={() => navigate(`/devices/${device.id || device._id}`)}
+                            onDetails={() => navigate(`/devices/${id}`)}
+                            selected={selectedIds.has(id)}
+                            onSelect={() => toggleSelect(id)}
                         />
-                    ))}
+                        );
+                    })}
                 </div>
             )}
+
+            {/* Bulk Delete Confirmation */}
+            <ConfirmModal
+                open={confirmBulkDelete}
+                title="Bulk Decommission"
+                message={`Decommission ${selectedIds.size} selected asset(s)? This action cannot be undone.`}
+                variant="danger"
+                confirmLabel="Execute Purge"
+                onConfirm={handleBulkDelete}
+                onCancel={() => setConfirmBulkDelete(false)}
+                loading={deleteLoading}
+            />
 
             {/* Governance Modals */}
             <ConfirmModal
@@ -448,6 +549,70 @@ export default function DevicesPage() {
                 selectedUser={null}
                 users={users}
             />
+
+            {/* Bulk Assign Owner Modal */}
+            {showBulkAssignModal && (
+                <Modal
+                    isOpen={showBulkAssignModal}
+                    onClose={() => { setShowBulkAssignModal(false); setBulkAssignUserId(''); }}
+                    size="md"
+                    backdrop="blur"
+                    classNames={{ base: "bg-slate-950/90 border border-white/[0.05] backdrop-blur-2xl shadow-2xl rounded-3xl" }}
+                >
+                    <ModalContent>
+                        {(onClose) => (
+                            <>
+                                <ModalHeader style={{ padding: '2.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                                        <div style={{ padding: '0.75rem', borderRadius: '1rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)' }}>
+                                            <Users size={22} />
+                                        </div>
+                                        <div>
+                                            <h3 style={{ fontSize: '1.25rem', fontWeight: 950, margin: 0, textTransform: 'uppercase', fontStyle: 'italic' }}>Bulk Assign Owner</h3>
+                                            <p className="text-tactical" style={{ fontSize: '9px', opacity: 0.3, marginTop: '2px' }}>Assign {selectedIds.size} asset(s) to a principal</p>
+                                        </div>
+                                    </div>
+                                </ModalHeader>
+                                <ModalBody style={{ padding: '0 2.5rem 2.5rem' }}>
+                                    <Select
+                                        label="TARGET_PRINCIPAL"
+                                        placeholder="Select new owner..."
+                                        labelPlacement="outside"
+                                        variant="bordered"
+                                        selectedKeys={bulkAssignUserId ? [bulkAssignUserId] : []}
+                                        onSelectionChange={(keys) => setBulkAssignUserId(Array.from(keys)[0])}
+                                        classNames={{
+                                            label: "text-tactical text-[9px] opacity-40 mb-3 tracking-[0.2em] font-black",
+                                            trigger: "h-14 border-white/[0.08] bg-white/[0.02] rounded-1.25rem",
+                                        }}
+                                    >
+                                        {users.map(u => (
+                                            <SelectItem key={u.id || u._id} textValue={u.username}>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontSize: '0.925rem', fontWeight: 800 }}>{u.username}</span>
+                                                    <span style={{ fontSize: '10px', opacity: 0.4 }}>{u.email}</span>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+                                </ModalBody>
+                                <ModalFooter style={{ padding: '2rem 2.5rem', gap: '1rem' }}>
+                                    <Button variant="flat" onPress={onClose} style={{ height: '3.5rem', borderRadius: '1rem', fontWeight: 800 }}>Cancel</Button>
+                                    <Button
+                                        color="primary"
+                                        onPress={handleBulkAssign}
+                                        isLoading={bulkAssignLoading}
+                                        isDisabled={!bulkAssignUserId}
+                                        style={{ flex: 1, height: '3.5rem', borderRadius: '1rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                                    >
+                                        Assign
+                                    </Button>
+                                </ModalFooter>
+                            </>
+                        )}
+                    </ModalContent>
+                </Modal>
+            )}
 
             {/* Ownership Transfer Protocol */}
             {showTransferModal && transferDevice && (

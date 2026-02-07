@@ -4,8 +4,10 @@
    ELITE DESIGN SYSTEM (CORE)
 ===================================== */
 :root {
+  /* Design Tokens - Hero UI Compatible */
   --primary: #3b82f6;
   --primary-rgb: 59, 130, 246;
+  --primary-glow: rgba(59, 130, 246, 0.25);
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
@@ -24,11 +26,13 @@
   
   --radius-xl: 18px;
   --radius-lg: 12px;
+  --radius-md: 10px;
   
   --shadow-elite: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
   
   --topbar-height: 64px;
   --sidebar-width: 280px;
+  --page-max-width: 1440px;
 }
 
 /* =====================================
@@ -88,6 +92,41 @@ body {
 
 .elite-card-body {
   padding: 1.5rem 2rem;
+}
+
+/* Admin Console - Hero UI aligned */
+.admin-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-dim) !important;
+  border-radius: var(--radius-xl) !important;
+}
+
+.admin-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-dim);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-card-body {
+  padding: 1.5rem 1.5rem;
+}
+
+.admin-grid-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.admin-grid-cols-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .admin-grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Typography */
@@ -212,6 +251,30 @@ body {
   margin-bottom: 2rem;
 }
 
+/* Admin Page Shell & Header (Hero UI integration) */
+.admin-page-shell {
+  width: 100%;
+  max-width: 100%;
+}
+
+.admin-page-header {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-dim) !important;
+  box-shadow: var(--shadow-elite) !important;
+}
+
+.admin-page-header .admin-page-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-lg);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
 
 /* Footer Signature */
 .elite-footer {
@@ -310,6 +373,42 @@ body {
 
 .elite-table-row:hover {
   background: rgba(255, 255, 255, 0.01);
+}
+
+/* Admin Table - Hero UI aligned */
+.admin-table {
+  --heroui-table-bg: transparent;
+}
+
+.admin-table .admin-table-thead {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-table .admin-table-th {
+  padding: 1rem 1.5rem;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.admin-table .admin-table-td {
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.admin-input-wrapper {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.admin-input-wrapper:focus-within {
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  background: rgba(59, 130, 246, 0.04) !important;
 }
 
 /* Modal Styling */
@@ -488,6 +587,13 @@ body {
 }
 
 /* Topbar Styling */
+.topbar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+}
+
 .top-bar-elite {
   box-shadow: 0 20px 40px -25px rgba(0, 0, 0, 0.6);
 }
@@ -495,6 +601,7 @@ body {
 .topbar-root {
   align-items: center;
   flex-wrap: nowrap;
+  min-height: var(--topbar-height);
 }
 
 .topbar-slot {
@@ -568,6 +675,67 @@ body {
   .user-card-body {
     min-height: unset;
   }
+}
+
+/* =====================================
+   BROADCAST / COMMUNICATIONS HUB
+===================================== */
+.broadcast-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .broadcast-layout {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+.broadcast-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.broadcast-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.broadcast-signal-card {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-xl);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.broadcast-signal-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(59, 130, 246, 0.15);
+  box-shadow: 0 8px 24px -8px rgba(59, 130, 246, 0.1);
+}
+
+.broadcast-toolbar {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.25rem;
+}
+
+.broadcast-empty {
+  padding: 6rem 2rem;
+  text-align: center;
+  opacity: 0.25;
+}
+
+.broadcast-status-card {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
 }
 
 .user-avatar-shell {

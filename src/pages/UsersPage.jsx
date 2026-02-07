@@ -6,6 +6,9 @@ import Modals from '../components/Modals';
 import adminService from '../services/adminService';
 import {
     Button,
+    Card,
+    CardBody,
+    CardHeader,
     Input,
     Divider,
 } from '@heroui/react';
@@ -23,6 +26,7 @@ import {
 import ConfirmModal from '../components/UI/ConfirmModal';
 import PageHeader from '../components/Layout/PageHeader';
 import PageShell from '../components/Layout/PageShell';
+import { inputClassNames, tableClassNames } from '../constants/uiClasses';
 
 export default function UsersPage() {
     const {
@@ -175,18 +179,18 @@ export default function UsersPage() {
             />
 
             {/* Tactical Intelligence Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="admin-grid-stats">
                 {[
                     { label: 'Total Principals', value: stats.total, icon: UsersIcon, color: 'var(--primary)', trend: 'Nodes Registry' },
                     { label: 'Authorized Sync', value: stats.active, icon: UserCheck, color: 'var(--success)', trend: 'Active Identity' },
                     { label: 'Security Admin', value: stats.admins, icon: Shield, color: '#a855f7', trend: 'L3 Persistence' },
                     { label: 'Access Suspended', value: stats.suspended, icon: AlertCircle, color: 'var(--danger)', trend: 'De-Auth State' }
                 ].map((stat, idx) => (
-                    <div key={idx} className="elite-card elite-card-interactive shadow-soft overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                    <Card key={idx} className="admin-card elite-card-interactive overflow-hidden">
                         {/* Decorative Glow */}
                         <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', background: stat.color, filter: 'blur(50px)', opacity: 0.1, pointerEvents: 'none' }} />
                         
-                        <div className="elite-card-body flex items-center gap-6 p-7 relative z-10">
+                        <CardBody className="flex items-center gap-6 p-7 relative z-10">
                             <div style={{ 
                                 width: '3.5rem', 
                                 height: '3.5rem', 
@@ -209,28 +213,22 @@ export default function UsersPage() {
                                     <p className="text-tactical" style={{ fontSize: '7px', opacity: 0.3, fontWeight: 800 }}>{stat.trend}</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </CardBody>
+                    </Card>
                 ))}
             </div>
 
             {/* Management Matrix */}
-            <div className="elite-card" style={{ background: 'rgba(255, 255, 255, 0.01)' }}>
-                <div className="elite-card-body" style={{ padding: 0 }}>
-                    {/* Interaction Header */}
-                    <div className="flex flex-wrap items-center gap-8 p-5 border-b border-white/[0.05] bg-slate-900/30">
-                        <div style={{ flex: 1, minWidth: '350px' }}>
+            <Card className="admin-card">
+                <CardHeader className="admin-card-header flex flex-wrap items-center gap-8 p-5 border-b border-white/[0.05]">
+                    <div style={{ flex: 1, minWidth: '280px' }}>
                             <Input
-                                placeholder="Filter identities across deep telemetry..."
-                                startContent={<Search size={18} style={{ color: 'var(--text-muted)', marginRight: '6px' }} />}
+                                placeholder="Filter identities..."
+                                startContent={<Search size={18} style={{ color: 'var(--text-muted)' }} />}
                                 value={searchQuery}
                                 onValueChange={setSearchQuery}
                                 variant="bordered"
-                                className="search-input-elite"
-                                classNames={{
-                                    inputWrapper: "h-12 border-white/[0.05] focus-within:border-blue-500/40 bg-white/[0.02] rounded-xl flex transition-colors",
-                                    input: "text-sm font-medium",
-                                }}
+                                classNames={inputClassNames}
                             />
                         </div>
 
@@ -250,18 +248,19 @@ export default function UsersPage() {
                                 <RefreshCw size={18} />
                             </Button>
                         </div>
-                    </div>
+                    </CardHeader>
 
                     {/* Data Visualization Grid */}
-                    <div style={{ minHeight: '550px' }}>
+                    <CardBody className="p-0">
+                    <div style={{ minHeight: '480px' }}>
                         <UserAccessControl
                             users={filteredUsers}
                             onAction={handleAction}
                             onEditRequest={(u) => { setSelectedUser(u); setShowModal(true); }}
                         />
                     </div>
-                </div>
-            </div>
+                    </CardBody>
+                </Card>
 
             <ConfirmModal
                 open={!!confirmDelete}
